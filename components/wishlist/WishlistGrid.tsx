@@ -4,9 +4,15 @@ import type { ProductItem } from "@/lib/data/products";
 
 type WishlistGridProps = {
   products: ProductItem[];
+  /** Narrower grid for account sidebar + center layout on desktop */
+  variant?: "page" | "account";
 };
 
-export function WishlistGrid({ products }: WishlistGridProps) {
+export function WishlistGrid({ products, variant = "page" }: WishlistGridProps) {
+  const gridClass =
+    variant === "account"
+      ? "grid grid-cols-2 items-stretch gap-2.5 sm:grid-cols-2 lg:grid-cols-3 lg:gap-3"
+      : "grid grid-cols-2 items-stretch gap-2.5 sm:grid-cols-3 md:grid-cols-4 md:gap-3 lg:grid-cols-4";
   if (products.length === 0) {
     return (
       <div className="rounded-lg border border-dashed border-rc-border bg-rc-surface/50 px-6 py-14 text-center">
@@ -27,7 +33,7 @@ export function WishlistGrid({ products }: WishlistGridProps) {
   }
 
   return (
-    <ul className="grid grid-cols-2 items-stretch gap-2.5 sm:grid-cols-3 md:grid-cols-4 md:gap-3 lg:grid-cols-4">
+    <ul className={gridClass}>
       {products.map((product) => (
         <li key={product.id} className="min-w-0">
           <ProductCard product={product} />

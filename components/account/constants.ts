@@ -2,6 +2,7 @@ import type { ComponentType } from "react";
 import { IconHeart } from "@/components/layout/icons";
 import {
   IconHelpSupport,
+  IconIdCard,
   IconMapPin,
   IconOrders,
 } from "./account-icons";
@@ -18,8 +19,14 @@ export type AccountNavEntry = {
 export const accountNavItems: AccountNavEntry[] = [
   { id: "orders", label: "Orders", href: "/account", Icon: IconOrders },
   { id: "wishlist", label: "Wishlist", href: "/wishlist", Icon: IconHeart },
-  { id: "addresses", label: "Addresses", href: "/account", Icon: IconMapPin },
-  { id: "help", label: "Help & Support", href: "/account", Icon: IconHelpSupport },
+  { id: "addresses", label: "Addresses", href: "/account/addresses", Icon: IconMapPin },
+  {
+    id: "profile",
+    label: "Profile Information",
+    href: "/account/profile",
+    Icon: IconIdCard,
+  },
+  { id: "help", label: "Help & Support", href: "/help", Icon: IconHelpSupport },
 ];
 
 export type OrderStatus = "delivered" | "shipped" | "processing";

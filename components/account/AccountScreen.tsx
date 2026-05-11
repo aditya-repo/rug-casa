@@ -4,15 +4,12 @@ import { HeaderAndNav } from "@/components/layout/HeaderAndNav";
 import { IconChevronRightThin } from "@/components/layout/icons";
 import { SiteFooter } from "@/components/layout/SiteFooter";
 import { UtilityBar } from "@/components/layout/UtilityBar";
-import { IconLogout } from "./account-icons";
 import {
-  accountNavItems,
-  mockRecentOrders,
-  type OrderStatus,
-} from "./constants";
-
-/** Set to an `accountNavItems` id to highlight that row, or `null` for none. */
-const ACTIVE_NAV_ID: string | null = null;
+  AccountBreadcrumb,
+  DesktopAccountSidebar,
+} from "./AccountChrome";
+import { LogoutConfirmButton } from "./LogoutConfirmButton";
+import { accountNavItems, mockRecentOrders, type OrderStatus } from "./constants";
 
 const statusLabel: Record<OrderStatus, string> = {
   delivered: "Delivered",
@@ -33,87 +30,9 @@ const mobileAccountTileStyles: Record<
   orders: { wrap: "bg-neutral-100", icon: "text-neutral-600" },
   wishlist: { wrap: "bg-rose-50", icon: "text-rose-600" },
   addresses: { wrap: "bg-sky-50", icon: "text-sky-600" },
+  profile: { wrap: "bg-violet-50", icon: "text-violet-600" },
   help: { wrap: "bg-amber-50", icon: "text-amber-700" },
 };
-
-function AccountNavRows() {
-  return (
-    <ul className="space-y-0.5">
-      {accountNavItems.map(({ id, label, href, Icon }) => {
-        const active = ACTIVE_NAV_ID !== null && id === ACTIVE_NAV_ID;
-        return (
-          <li key={id}>
-            <Link
-              href={href}
-              className={`group relative flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors ${
-                active
-                  ? "bg-[#EBF4FF] text-[#1E40AF]"
-                  : "text-neutral-800 hover:bg-neutral-50"
-              }`}
-            >
-              {active ? (
-                <span
-                  className="absolute left-0 top-1/2 h-8 w-1 -translate-y-1/2 rounded-r bg-rc-accent"
-                  aria-hidden
-                />
-              ) : null}
-              <Icon
-                className={`h-5 w-5 shrink-0 ${
-                  active
-                    ? "text-rc-accent"
-                    : "text-neutral-500 group-hover:text-neutral-700"
-                }`}
-              />
-              <span className={active ? "pl-1" : ""}>{label}</span>
-            </Link>
-          </li>
-        );
-      })}
-    </ul>
-  );
-}
-
-function AccountBreadcrumb() {
-  return (
-    <nav aria-label="Breadcrumb" className="mb-5 text-sm text-neutral-500">
-      <ol className="flex flex-wrap items-center gap-2">
-        <li>
-          <Link href="/" className="transition-colors hover:text-rc-navy">
-            Home
-          </Link>
-        </li>
-        <li aria-hidden className="text-neutral-400">
-          &gt;
-        </li>
-        <li className="font-medium text-neutral-900">My Account</li>
-      </ol>
-    </nav>
-  );
-}
-
-function DesktopAccountSidebar() {
-  return (
-    <div className="w-full lg:max-w-[300px]">
-      <div className="rounded-[10px] border border-neutral-200 bg-white shadow-[0_1px_3px_rgba(0,0,0,0.06)]">
-        <p className="border-b border-neutral-100 px-4 py-3.5 text-[15px] font-semibold text-neutral-900">
-          My Account
-        </p>
-        <div className="p-2 pb-1">
-          <AccountNavRows />
-        </div>
-        <div className="border-t border-neutral-100 p-2">
-          <button
-            type="button"
-            className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-red-600 transition-colors hover:bg-red-50"
-          >
-            <IconLogout className="h-5 w-5 shrink-0" />
-            Logout
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-}
 
 function DesktopAccountCenter() {
   return (
@@ -206,7 +125,8 @@ function DesktopAccountCenter() {
 }
 
 function MobileAccountDashboard() {
-  const gridCount = accountNavItems.length;
+  const mobileNavItems = accountNavItems.filter((item) => item.id !== "profile");
+  const gridCount = mobileNavItems.length;
 
   return (
     <div className="space-y-3.5 pb-3">
@@ -216,7 +136,7 @@ function MobileAccountDashboard() {
         </h1>
 
         <Link
-          href="/account"
+          href="/account/profile"
           className="mt-2.5 flex items-center gap-2.5 rounded-lg border border-neutral-200 bg-white p-2.5 shadow-[0_1px_2px_rgba(0,0,0,0.05)] transition-colors active:bg-neutral-50"
         >
           <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#EDE9FE] text-sm font-semibold text-violet-800">
@@ -230,7 +150,7 @@ function MobileAccountDashboard() {
         </Link>
 
         <ul className="mt-2.5 grid grid-cols-2 gap-2">
-          {accountNavItems.map(({ id, label, href, Icon }, index) => {
+          {mobileNavItems.map(({ id, label, href, Icon }, index) => {
             const styles = mobileAccountTileStyles[id] ?? {
               wrap: "bg-neutral-100",
               icon: "text-neutral-600",
@@ -314,13 +234,7 @@ function MobileAccountDashboard() {
         </div>
       </section>
 
-      <button
-        type="button"
-        className="flex w-full items-center justify-center gap-1.5 rounded-lg border border-red-100 bg-white py-2 text-xs font-semibold text-red-600 shadow-[0_1px_2px_rgba(0,0,0,0.04)] transition-colors active:bg-red-50"
-      >
-        <IconLogout className="h-4 w-4 shrink-0" />
-        Logout
-      </button>
+      <LogoutConfirmButton variant="mobile" />
     </div>
   );
 }
@@ -333,9 +247,14 @@ export function AccountScreen() {
       <main className="flex-1 bg-white">
         <div className="mx-auto max-w-7xl px-4 py-4 md:py-8">
           <div className="hidden md:block">
-            <AccountBreadcrumb />
+            <AccountBreadcrumb
+              items={[
+                { label: "Home", href: "/" },
+                { label: "My Account" },
+              ]}
+            />
             <div className="flex flex-col gap-8 lg:flex-row lg:items-start lg:gap-10">
-              <DesktopAccountSidebar />
+              <DesktopAccountSidebar activeNavId="orders" />
               <DesktopAccountCenter />
             </div>
           </div>

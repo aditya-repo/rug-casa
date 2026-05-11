@@ -4,62 +4,58 @@ import {
   AccountBreadcrumb,
   DesktopAccountSidebar,
 } from "@/components/account/AccountChrome";
-import { WishlistGrid } from "@/components/wishlist/WishlistGrid";
+import { HelpContactSection } from "@/components/help/HelpContactSection";
 import { IconArrowLeft } from "@/components/layout/icons";
 import { HeaderAndNav } from "@/components/layout/HeaderAndNav";
 import { SiteFooter } from "@/components/layout/SiteFooter";
 import { UtilityBar } from "@/components/layout/UtilityBar";
-import { getWishlistProducts } from "@/lib/data/wishlist";
 
 export const metadata: Metadata = {
-  title: "Wishlist — RugCasa",
+  title: "Help & Support — RugCasa",
   description:
-    "Rugs you have saved. Sign in later to sync your wishlist across devices.",
+    "Call or message RugCasa on WhatsApp for orders, delivery, and product help.",
 };
 
-export default function WishlistPage() {
-  const products = getWishlistProducts();
-
+export default function HelpPage() {
   return (
     <div className="flex min-h-full flex-col bg-white">
       <UtilityBar />
       <HeaderAndNav />
       <main className="flex-1 bg-white pb-10 md:pb-14">
         <div className="mx-auto max-w-7xl px-4 py-4 md:py-8">
-          {/* Desktop: account shell; center = wishlist only */}
+          {/* Desktop: same account shell; center column = help only */}
           <div className="hidden md:block">
             <AccountBreadcrumb
               items={[
                 { label: "Home", href: "/" },
                 { label: "My Account", href: "/account" },
-                { label: "Wishlist" },
+                { label: "Help & Support" },
               ]}
             />
             <div className="flex flex-col gap-8 lg:flex-row lg:items-start lg:gap-10">
-              <DesktopAccountSidebar activeNavId="wishlist" />
+              <DesktopAccountSidebar activeNavId="help" />
               <div className="min-w-0 flex-1 space-y-6">
                 <header>
                   <h1 className="text-2xl font-semibold tracking-tight text-neutral-900 lg:text-[28px] lg:leading-tight">
-                    My wishlist
+                    Help & Support
                   </h1>
                 </header>
-                <WishlistGrid products={products} variant="account" />
-                {products.length > 0 ? (
-                  <p>
-                    <Link
-                      href="/shop"
-                      className="text-sm font-semibold text-rc-accent hover:underline"
-                    >
-                      Continue shopping
-                    </Link>
-                  </p>
-                ) : null}
+                <HelpContactSection variant="embedded" />
+                <p className="text-sm text-neutral-500">
+                  Prefer email?{" "}
+                  <Link
+                    href="/contact"
+                    className="font-semibold text-rc-accent hover:underline"
+                  >
+                    Contact us
+                  </Link>
+                </p>
               </div>
             </div>
           </div>
 
-          {/* Mobile: full-width wishlist (unchanged) */}
-          <div className="md:hidden">
+          {/* Mobile: full-width help (unchanged standalone flow) */}
+          <div className="pb-10 md:hidden">
             <div className="flex min-w-0 items-center gap-1.5">
               <Link
                 href="/account"
@@ -89,31 +85,31 @@ export default function WishlistPage() {
                   <li className="shrink-0" aria-hidden>
                     /
                   </li>
-                  <li className="shrink-0 font-medium text-rc-navy">Wishlist</li>
+                  <li className="shrink-0 font-medium text-rc-navy">Help & Support</li>
                 </ol>
               </nav>
             </div>
 
             <header className="mt-4 border-b border-rc-border pb-4">
               <h1 className="font-heading text-2xl font-semibold text-rc-navy">
-                My wishlist
+                Help & Support
               </h1>
             </header>
 
-            <div className="mt-6">
-              <WishlistGrid products={products} />
+            <div className="mt-8">
+              <HelpContactSection />
             </div>
 
-            {products.length > 0 ? (
-              <p className="mt-8 text-center">
-                <Link
-                  href="/shop"
-                  className="text-sm font-semibold text-rc-navy underline-offset-2 hover:underline"
-                >
-                  Continue shopping
-                </Link>
-              </p>
-            ) : null}
+            <p className="mx-auto mt-10 max-w-2xl text-center text-sm text-rc-muted">
+              Prefer email? Use{" "}
+              <Link
+                href="/contact"
+                className="font-semibold text-rc-navy underline-offset-2 hover:underline"
+              >
+                Contact us
+              </Link>{" "}
+              for the full form.
+            </p>
           </div>
         </div>
       </main>
