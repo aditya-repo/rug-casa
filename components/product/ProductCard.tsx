@@ -65,6 +65,9 @@ export function ProductCard({ product, href }: ProductCardProps) {
           <p className="line-clamp-2 text-[11px] font-normal text-rc-muted md:text-xs">
             {product.name}
           </p>
+          <p className="mt-0.5 text-[10px] font-medium text-rc-muted md:text-[11px]">
+            {product.dimensions}
+          </p>
         </Link>
         <div className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5 pt-0.5">
           <span className="text-sm font-bold text-rc-navy md:text-base">
