@@ -19,7 +19,7 @@ export type ProductItem = {
 export const newArrivals: ProductItem[] = [
   {
     id: "na-medallion",
-    brand: "RugCasa",
+    brand: "Rugs Bhadohi",
     name: "Persian Medallion Rug",
     dimensions: "5 x 7 ft",
     price: "4,999",
@@ -34,7 +34,7 @@ export const newArrivals: ProductItem[] = [
   },
   {
     id: "na-abstract",
-    brand: "RugCasa",
+    brand: "Rugs Bhadohi",
     name: "Modern Abstract Rug",
     dimensions: "6 x 9 ft",
     price: "3,499",
@@ -49,7 +49,7 @@ export const newArrivals: ProductItem[] = [
   },
   {
     id: "na-boho",
-    brand: "RugCasa",
+    brand: "Rugs Bhadohi",
     name: "Boho Patterned Rug",
     dimensions: "4 x 6 ft",
     price: "2,999",
@@ -64,7 +64,7 @@ export const newArrivals: ProductItem[] = [
   },
   {
     id: "na-traditional",
-    brand: "RugCasa",
+    brand: "Rugs Bhadohi",
     name: "Traditional Motif Rug",
     dimensions: "8 x 10 ft",
     price: "5,499",
@@ -79,7 +79,7 @@ export const newArrivals: ProductItem[] = [
   },
   {
     id: "na-jute",
-    brand: "RugCasa",
+    brand: "Rugs Bhadohi",
     name: "Jute Braided Rug",
     dimensions: "3 x 5 ft",
     price: "2,499",
@@ -92,12 +92,57 @@ export const newArrivals: ProductItem[] = [
       "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=800&h=520&fit=crop",
     imageAlt: "Jute braided rug",
   },
+  {
+    id: "na-shag",
+    brand: "Rugs Bhadohi",
+    name: "Soft Shag Area Rug",
+    dimensions: "5 x 7 ft",
+    price: "3,299",
+    mrp: "4,499",
+    discountPercent: 27,
+    rating: 4.5,
+    reviews: 58,
+    tag: "New",
+    imageSrc:
+      "https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?w=800&h=520&fit=crop",
+    imageAlt: "Soft shag area rug in a living room",
+  },
+  {
+    id: "na-geometric",
+    brand: "Rugs Bhadohi",
+    name: "Geometric Print Rug",
+    dimensions: "6 x 9 ft",
+    price: "3,899",
+    mrp: "5,199",
+    discountPercent: 25,
+    rating: 4.4,
+    reviews: 47,
+    tag: "New",
+    imageSrc:
+      "https://images.unsplash.com/photo-1600047509807-ba8f99d2cdde?w=800&h=520&fit=crop",
+    imageAlt: "Geometric print rug",
+  },
+  {
+    id: "na-kilim",
+    brand: "Rugs Bhadohi",
+    name: "Kilim Flatweave Rug",
+    dimensions: "4 x 6 ft",
+    price: "2,799",
+    mrp: "3,799",
+    discountPercent: 26,
+    rating: 4.6,
+    reviews: 81,
+    tag: "New",
+    imageSrc:
+      "https://images.unsplash.com/photo-1578683010236-d716f9a3f461?w=800&h=520&fit=crop",
+    imageAlt: "Kilim flatweave rug",
+  },
 ];
 
 export const trendingNow: ProductItem[] = [
   {
     id: "tr-vintage",
-    brand: "RugCasa",
+    brand: "Rugs Bhadohi",
     name: "Vintage Distressed Rug",
     dimensions: "5 x 8 ft",
     price: "3,199",
@@ -112,7 +157,7 @@ export const trendingNow: ProductItem[] = [
   },
   {
     id: "tr-rugged",
-    brand: "RugCasa",
+    brand: "Rugs Bhadohi",
     name: "Rugged Runner Rug",
     dimensions: "2.5 x 8 ft",
     price: "2,899",
@@ -127,7 +172,7 @@ export const trendingNow: ProductItem[] = [
   },
   {
     id: "tr-floral",
-    brand: "RugCasa",
+    brand: "Rugs Bhadohi",
     name: "Floral Heritage Rug",
     dimensions: "6 x 9 ft",
     price: "3,799",
@@ -142,7 +187,7 @@ export const trendingNow: ProductItem[] = [
   },
   {
     id: "tr-minimal",
-    brand: "RugCasa",
+    brand: "Rugs Bhadohi",
     name: "Minimal Living Rug",
     dimensions: "8 x 10 ft",
     price: "4,299",
@@ -157,7 +202,7 @@ export const trendingNow: ProductItem[] = [
   },
   {
     id: "tr-textured",
-    brand: "RugCasa",
+    brand: "Rugs Bhadohi",
     name: "Textured Weave Rug",
     dimensions: "4 x 6 ft",
     price: "2,699",
@@ -170,12 +215,57 @@ export const trendingNow: ProductItem[] = [
       "https://images.unsplash.com/photo-1615529328331-f8917597711f?w=800&h=520&fit=crop",
     imageAlt: "Textured weave rug",
   },
+  {
+    id: "tr-oriental",
+    brand: "Rugs Bhadohi",
+    name: "Oriental Classic Rug",
+    dimensions: "5 x 7 ft",
+    price: "4,599",
+    mrp: "5,999",
+    discountPercent: 23,
+    rating: 4.8,
+    reviews: 132,
+    tag: "Bestseller",
+    imageSrc:
+      "https://images.unsplash.com/photo-1600210491892-03d54c0aaf87?w=800&h=520&fit=crop",
+    imageAlt: "Oriental classic rug",
+  },
+  {
+    id: "tr-nordic",
+    brand: "Rugs Bhadohi",
+    name: "Nordic Solid Rug",
+    dimensions: "6 x 8 ft",
+    price: "3,499",
+    mrp: "4,599",
+    discountPercent: 24,
+    rating: 4.5,
+    reviews: 89,
+    tag: "Bestseller",
+    imageSrc:
+      "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=800&h=520&fit=crop",
+    imageAlt: "Nordic solid rug",
+  },
+  {
+    id: "tr-coastal",
+    brand: "Rugs Bhadohi",
+    name: "Coastal Stripe Rug",
+    dimensions: "5 x 8 ft",
+    price: "3,099",
+    mrp: "4,099",
+    discountPercent: 24,
+    rating: 4.3,
+    reviews: 64,
+    tag: "Bestseller",
+    imageSrc:
+      "https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?w=800&h=520&fit=crop",
+    imageAlt: "Coastal stripe rug",
+  },
 ];
 
 export const editorsPicks: ProductItem[] = [
   {
     id: "ep-kilim",
-    brand: "RugCasa",
+    brand: "Rugs Bhadohi",
     name: "Kilim Flatweave Area Rug",
     dimensions: "5 x 7 ft",
     price: "3,599",
@@ -190,7 +280,7 @@ export const editorsPicks: ProductItem[] = [
   },
   {
     id: "ep-ombre",
-    brand: "RugCasa",
+    brand: "Rugs Bhadohi",
     name: "Ombre Wool Blend Rug",
     dimensions: "6 x 9 ft",
     price: "4,199",
@@ -205,7 +295,7 @@ export const editorsPicks: ProductItem[] = [
   },
   {
     id: "ep-berber",
-    brand: "RugCasa",
+    brand: "Rugs Bhadohi",
     name: "Berber Inspired Shag Rug",
     dimensions: "5 x 8 ft",
     price: "3,899",
@@ -220,7 +310,7 @@ export const editorsPicks: ProductItem[] = [
   },
   {
     id: "ep-geometric",
-    brand: "RugCasa",
+    brand: "Rugs Bhadohi",
     name: "Geometric Low-Pile Rug",
     dimensions: "3 x 5 ft",
     price: "2,799",
@@ -235,7 +325,7 @@ export const editorsPicks: ProductItem[] = [
   },
   {
     id: "ep-sisal",
-    brand: "RugCasa",
+    brand: "Rugs Bhadohi",
     name: "Natural Sisal Border Rug",
     dimensions: "6 x 9 ft",
     price: "3,299",
@@ -253,7 +343,7 @@ export const editorsPicks: ProductItem[] = [
 export const roomEssentials: ProductItem[] = [
   {
     id: "re-runner",
-    brand: "RugCasa",
+    brand: "Rugs Bhadohi",
     name: "Slim Hallway Runner",
     dimensions: "2 x 10 ft",
     price: "1,899",
@@ -268,7 +358,7 @@ export const roomEssentials: ProductItem[] = [
   },
   {
     id: "re-round",
-    brand: "RugCasa",
+    brand: "Rugs Bhadohi",
     name: "Round Jute Accent Rug",
     dimensions: "6 ft (round)",
     price: "2,199",
@@ -283,7 +373,7 @@ export const roomEssentials: ProductItem[] = [
   },
   {
     id: "re-doormat",
-    brand: "RugCasa",
+    brand: "Rugs Bhadohi",
     name: "Heavy Duty Door Mat",
     dimensions: "2 x 3 ft",
     price: "899",
@@ -298,7 +388,7 @@ export const roomEssentials: ProductItem[] = [
   },
   {
     id: "re-kids",
-    brand: "RugCasa",
+    brand: "Rugs Bhadohi",
     name: "Playroom Washable Rug",
     dimensions: "5 x 7 ft",
     price: "2,499",
@@ -313,7 +403,7 @@ export const roomEssentials: ProductItem[] = [
   },
   {
     id: "re-outdoor",
-    brand: "RugCasa",
+    brand: "Rugs Bhadohi",
     name: "Outdoor Patio Rug",
     dimensions: "5 x 8 ft",
     price: "2,599",

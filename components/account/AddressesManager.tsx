@@ -8,7 +8,7 @@ import {
   type SavedAddress,
 } from "@/lib/data/addresses";
 
-const STORAGE_KEY = "rugcasa-account-addresses";
+const STORAGE_KEY = "rugs-bhadohi-account-addresses";
 
 const emptyForm = (): Omit<SavedAddress, "id" | "isDefault"> => ({
   label: "home",

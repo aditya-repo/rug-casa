@@ -11,8 +11,8 @@ import { SiteFooter } from "@/components/layout/SiteFooter";
 import { UtilityBar } from "@/components/layout/UtilityBar";
 
 export const metadata: Metadata = {
-  title: "Addresses — RugCasa",
-  description: "Manage your saved delivery addresses for RugCasa orders.",
+  title: "Addresses — Rugs Bhadohi",
+  description: "Manage your saved delivery addresses for Rugs Bhadohi orders.",
 };
 
 export default function AccountAddressesPage() {

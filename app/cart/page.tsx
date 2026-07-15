@@ -8,9 +8,9 @@ import { UtilityBar } from "@/components/layout/UtilityBar";
 import { getCartLines } from "@/lib/data/cart";
 
 export const metadata: Metadata = {
-  title: "Shopping Cart — RugCasa",
+  title: "Shopping Cart — Rugs Bhadohi",
   description:
-    "Review your rug order, shipping, and total before checkout at RugCasa.",
+    "Review your rug order, shipping, and total before checkout at Rugs Bhadohi.",
 };
 
 export default function CartPage() {

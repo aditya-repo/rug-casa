@@ -1,11 +1,12 @@
 /**
- * Customer care numbers — update to your real RugCasa lines.
- * `WHATSAPP_E164` is country + number without + or spaces (wa.me format).
+ * Customer care numbers — sourced from `company` so storefront contact stays in one place.
  */
-export const SUPPORT_DISPLAY_PHONE = "+91 98765 43210";
-export const SUPPORT_PHONE_TEL = "tel:+919876543210";
+import { company, companyWhatsAppUrl } from "@/lib/data/company";
 
-export const SUPPORT_DISPLAY_WHATSAPP = "+91 98765 43210";
-export const SUPPORT_WHATSAPP_E164 = "919876543210";
+export const SUPPORT_DISPLAY_PHONE = company.phone.display;
+export const SUPPORT_PHONE_TEL = company.phone.tel;
 
-export const SUPPORT_WHATSAPP_URL = `https://wa.me/${SUPPORT_WHATSAPP_E164}`;
+export const SUPPORT_DISPLAY_WHATSAPP = company.whatsapp.display;
+export const SUPPORT_WHATSAPP_E164 = company.whatsapp.e164;
+
+export const SUPPORT_WHATSAPP_URL = companyWhatsAppUrl();

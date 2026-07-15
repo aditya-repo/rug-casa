@@ -11,9 +11,9 @@ import { SiteFooter } from "@/components/layout/SiteFooter";
 import { UtilityBar } from "@/components/layout/UtilityBar";
 
 export const metadata: Metadata = {
-  title: "Help & Support — RugCasa",
+  title: "Help & Support — Rugs Bhadohi",
   description:
-    "Call or message RugCasa on WhatsApp for orders, delivery, and product help.",
+    "Call or message Rugs Bhadohi on WhatsApp for orders, delivery, and product help.",
 };
 
 export default function HelpPage() {

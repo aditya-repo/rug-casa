@@ -1,77 +1,24 @@
-import Link from "next/link";
-import { ProductCard } from "@/components/product/ProductCard";
-import {
-  editorsPicks,
-  newArrivals,
-  roomEssentials,
-  trendingNow,
-  type ProductItem,
-} from "@/lib/data/products";
+import { ArtistCollectionCarousel } from "@/components/home/ArtistCollectionCarousel";
+import { CompanyIntroSection } from "@/components/home/CompanyIntroSection";
+import { FeaturedRugsSection } from "@/components/home/FeaturedRugsSection";
+import type { ArtistCollectionItem } from "@/lib/data/artist-collection";
+import type { ProductItem } from "@/lib/data/products";
 
-function ProductRow({
-  title,
-  products,
+export function ProductShowcase({
+  artistCollection,
+  featuredProducts,
 }: {
-  title: string;
-  products: ProductItem[];
+  artistCollection: ArtistCollectionItem[];
+  featuredProducts: ProductItem[];
 }) {
   return (
-    <section className="space-y-2.5" aria-label={title}>
-      <div className="flex items-center justify-between">
-        <h2 className="text-xl font-semibold text-rc-navy">{title}</h2>
-        <Link href="/shop" className="text-sm font-medium text-rc-navy hover:underline">
-          View All
-        </Link>
+    <section className="bg-white pb-4 pt-1 md:pb-5 md:pt-2" aria-label="Product collections">
+      <div className="mt-2 md:mt-4">
+        <FeaturedRugsSection products={featuredProducts} />
       </div>
-      <div className="grid grid-cols-2 items-stretch gap-2.5 md:grid-cols-4 md:gap-3">
-        {products.slice(0, 4).map((product) => (
-          <ProductCard key={product.id} product={product} />
-        ))}
-      </div>
-    </section>
-  );
-}
-
-function TrendingCarouselSection({ products }: { products: ProductItem[] }) {
-  return (
-    <section className="space-y-2.5" aria-labelledby="trending-now-heading">
-      <div className="flex items-center justify-between">
-        <h2 id="trending-now-heading" className="text-xl font-semibold text-rc-navy">
-          Trending Now
-        </h2>
-        <Link href="/shop" className="text-sm font-medium text-rc-navy hover:underline">
-          View All
-        </Link>
-      </div>
-      <div className="relative">
-        <div
-          className="flex snap-x snap-mandatory gap-3 overflow-x-auto overflow-y-hidden scroll-smooth px-1 pb-2 pt-0.5 [-webkit-overflow-scrolling:touch] [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden md:gap-4 md:px-0.5"
-          role="region"
-          aria-roledescription="carousel"
-          aria-label="Trending products"
-        >
-          {products.map((product) => (
-            <div
-              key={product.id}
-              className="w-[min(46vw,15.25rem)] shrink-0 snap-start sm:w-52 md:w-[14.75rem] lg:w-60"
-            >
-              <ProductCard product={product} />
-            </div>
-          ))}
-        </div>
-      </div>
-    </section>
-  );
-}
-
-export function ProductShowcase() {
-  return (
-    <section className="bg-white py-4 md:py-5" aria-label="Product collections">
-      <div className="mx-auto max-w-7xl space-y-4 px-4 md:space-y-5">
-        <TrendingCarouselSection products={trendingNow} />
-        <ProductRow title="New Arrivals" products={newArrivals} />
-        <ProductRow title="Editor's Picks" products={editorsPicks} />
-        <ProductRow title="Room Essentials" products={roomEssentials} />
+      <CompanyIntroSection />
+      <div className="mx-auto max-w-7xl px-4 pt-4 md:pt-5">
+        <ArtistCollectionCarousel items={artistCollection} />
       </div>
     </section>
   );

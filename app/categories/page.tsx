@@ -4,19 +4,19 @@ import { CategoriesGrid } from "@/components/categories/CategoriesGrid";
 import { IconArrowLeft } from "@/components/layout/icons";
 import { HeaderAndNav } from "@/components/layout/HeaderAndNav";
 import { SiteFooter } from "@/components/layout/SiteFooter";
-import { UtilityBar } from "@/components/layout/UtilityBar";
-import { categories } from "@/lib/data/categories";
+import { fetchPublicHomepageCategories } from "@/lib/api/categories";
 
 export const metadata: Metadata = {
-  title: "Shop by Category — RugCasa",
+  title: "Shop by Category — Rugs Bhadohi",
   description:
-    "Browse rug categories: area rugs, runners, round rugs, outdoor, and more.",
+    "Browse rug categories: abstract, irregular, traditional, modern, transitional, and patchwork.",
 };
 
-export default function CategoriesPage() {
+export default async function CategoriesPage() {
+  const categories = await fetchPublicHomepageCategories();
+
   return (
     <div className="flex min-h-full flex-col bg-white">
-      <UtilityBar />
       <HeaderAndNav />
       <main className="flex-1 pb-10 md:pb-14">
         <div className="mx-auto max-w-7xl px-4 pt-4 md:pt-6">

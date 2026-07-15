@@ -1,8 +1,14 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { ProductCard } from "@/components/product/ProductCard";
-import type { ProductItem } from "@/lib/data/products";
+import {
+  ShopFiltersSidebar,
+  type ShopFilterOption,
+  type ShopFilterState,
+} from "@/components/shop/ShopFiltersSidebar";
+import { ShopListingCard } from "@/components/shop/ShopListingCard";
+import type { CategoryItem } from "@/lib/data/categories";
+import type { ShopProductItem } from "@/lib/api/shop-products";
 
 type SortKey = "featured" | "price-low" | "price-high" | "rating";
 
@@ -10,20 +16,100 @@ function parsePriceRupee(value: string): number {
   return Number(value.replace(/,/g, "")) || 0;
 }
 
+function matchesSize(dimensions: string, sizeId: string): boolean {
+  const needle = sizeId.toLowerCase().replace(/\s+/g, "");
+  const compact = dimensions
+    .toLowerCase()
+    .replace(/\s+/g, "")
+    .replace(/ft\.?/g, "");
+  return compact.includes(needle);
+}
+
+function matchesAny(selected: string[], value: string): boolean {
+  if (selected.length === 0) return true;
+  const normalized = value.trim().toLowerCase();
+  if (!normalized) return false;
+  return selected.some((item) => item.trim().toLowerCase() === normalized);
+}
+
 type ShopProductGridProps = {
-  products: ProductItem[];
-  /** When false, hide the product count (e.g. shown in page title bar). Default true. */
-  showProductCount?: boolean;
+  products: ShopProductItem[];
+  categories?: CategoryItem[];
+  collections?: ShopFilterOption[];
+  initialCategorySlug?: string;
+};
+
+const EMPTY_FILTERS: ShopFilterState = {
+  categories: [],
+  collections: [],
+  shapes: [],
+  weavingTypes: [],
+  materials: [],
+  patterns: [],
+  thicknesses: [],
+  sizes: [],
+  colors: [],
 };
 
 export function ShopProductGrid({
   products,
-  showProductCount = true,
+  categories = [],
+  collections = [],
+  initialCategorySlug,
 }: ShopProductGridProps) {
   const [sort, setSort] = useState<SortKey>("featured");
+  const [filters, setFilters] = useState<ShopFilterState>({
+    ...EMPTY_FILTERS,
+    categories: initialCategorySlug ? [initialCategorySlug] : [],
+  });
+  const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
+
+  const categoryLabelBySlug = useMemo(() => {
+    const map = new Map<string, string>();
+    for (const item of categories) map.set(item.slug, item.label);
+    return map;
+  }, [categories]);
+
+  const collectionLabelBySlug = useMemo(() => {
+    const map = new Map<string, string>();
+    for (const item of collections) map.set(item.slug, item.label);
+    return map;
+  }, [collections]);
+
+  const filtered = useMemo(() => {
+    return products.filter((p) => {
+      if (filters.categories.length > 0) {
+        if (!filters.categories.includes(p.categorySlug)) return false;
+      }
+
+      if (filters.collections.length > 0) {
+        const titles = new Set(p.collectionTitles.map((t) => t.toLowerCase()));
+        const matched = filters.collections.some((slug) => {
+          const label = collectionLabelBySlug.get(slug);
+          return Boolean(label && titles.has(label.toLowerCase()));
+        });
+        if (!matched) return false;
+      }
+
+      if (!matchesAny(filters.shapes, p.shape)) return false;
+      if (!matchesAny(filters.weavingTypes, p.weavingType)) return false;
+      if (!matchesAny(filters.materials, p.material)) return false;
+      if (!matchesAny(filters.patterns, p.patternArt)) return false;
+      if (!matchesAny(filters.thicknesses, p.thickness)) return false;
+      if (!matchesAny(filters.colors, p.color)) return false;
+
+      if (filters.sizes.length > 0) {
+        if (!filters.sizes.some((size) => matchesSize(p.dimensions, size))) {
+          return false;
+        }
+      }
+
+      return true;
+    });
+  }, [products, filters, collectionLabelBySlug]);
 
   const sorted = useMemo(() => {
-    const list = [...products];
+    const list = [...filtered];
     if (sort === "price-low") {
       list.sort((a, b) => parsePriceRupee(a.price) - parsePriceRupee(b.price));
     } else if (sort === "price-high") {
@@ -32,41 +118,201 @@ export function ShopProductGrid({
       list.sort((a, b) => b.rating - a.rating || b.reviews - a.reviews);
     }
     return list;
-  }, [products, sort]);
+  }, [filtered, sort]);
+
+  function removeFromList(
+    key: keyof ShopFilterState,
+    value: string,
+  ) {
+    setFilters((f) => ({
+      ...f,
+      [key]: f[key].filter((s) => s !== value),
+    }));
+  }
+
+  const hasChips =
+    filters.categories.length > 0 ||
+    filters.collections.length > 0 ||
+    filters.shapes.length > 0 ||
+    filters.weavingTypes.length > 0 ||
+    filters.materials.length > 0 ||
+    filters.patterns.length > 0 ||
+    filters.thicknesses.length > 0 ||
+    filters.sizes.length > 0 ||
+    filters.colors.length > 0;
+
+  const sidebarProps = {
+    filters,
+    onChange: setFilters,
+    categories,
+    collections,
+  };
+
+  const chipClass =
+    "inline-flex items-center gap-1.5 rounded-full border border-rc-border bg-rc-surface px-3 py-1 text-xs text-rc-navy";
 
   return (
-    <div>
-      <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        {showProductCount ? (
-          <p className="text-sm text-rc-muted">
-            <span className="font-semibold text-rc-navy">{sorted.length}</span>{" "}
-            products
-          </p>
-        ) : (
-          <span className="hidden sm:block sm:flex-1" aria-hidden />
-        )}
-        <label className="flex items-center gap-2 text-sm text-rc-navy sm:ml-auto">
-          <span className="shrink-0 text-rc-muted">Sort by</span>
-          <select
-            value={sort}
-            onChange={(e) => setSort(e.target.value as SortKey)}
-            className="min-w-[10rem] rounded-lg border border-rc-border bg-white px-3 py-2 text-sm font-medium text-rc-navy outline-none focus-visible:ring-2 focus-visible:ring-rc-navy"
-          >
-            <option value="featured">Featured</option>
-            <option value="price-low">Price: Low to High</option>
-            <option value="price-high">Price: High to Low</option>
-            <option value="rating">Customer Rating</option>
-          </select>
-        </label>
+    <div className="lg:grid lg:grid-cols-[15rem_minmax(0,1fr)] lg:gap-10 xl:grid-cols-[16rem_minmax(0,1fr)] xl:gap-12">
+      <div className="hidden border-r border-rc-border pr-8 lg:block">
+        <ShopFiltersSidebar {...sidebarProps} />
       </div>
 
-      <ul className="grid grid-cols-2 items-stretch gap-2.5 sm:grid-cols-3 md:grid-cols-4 md:gap-3 lg:grid-cols-4">
-        {sorted.map((product) => (
-          <li key={product.id} className="min-w-0">
-            <ProductCard product={product} />
-          </li>
-        ))}
-      </ul>
+      <div className="min-w-0">
+        <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
+          <div className="flex min-w-0 flex-1 flex-wrap items-center gap-2">
+            <button
+              type="button"
+              onClick={() => setMobileFiltersOpen((v) => !v)}
+              className="rounded-full border border-rc-border px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.12em] text-rc-navy lg:hidden"
+            >
+              {mobileFiltersOpen ? "Hide filters" : "Filters"}
+            </button>
+
+            {hasChips ? (
+              <div className="flex flex-wrap gap-2">
+                {filters.categories.map((slug) => (
+                  <button
+                    key={`cat-${slug}`}
+                    type="button"
+                    onClick={() => removeFromList("categories", slug)}
+                    className={chipClass}
+                  >
+                    {categoryLabelBySlug.get(slug) ?? slug}
+                    <span aria-hidden>×</span>
+                  </button>
+                ))}
+                {filters.collections.map((slug) => (
+                  <button
+                    key={`col-${slug}`}
+                    type="button"
+                    onClick={() => removeFromList("collections", slug)}
+                    className={chipClass}
+                  >
+                    {collectionLabelBySlug.get(slug) ?? slug}
+                    <span aria-hidden>×</span>
+                  </button>
+                ))}
+                {filters.shapes.map((value) => (
+                  <button
+                    key={`shape-${value}`}
+                    type="button"
+                    onClick={() => removeFromList("shapes", value)}
+                    className={chipClass}
+                  >
+                    {value}
+                    <span aria-hidden>×</span>
+                  </button>
+                ))}
+                {filters.weavingTypes.map((value) => (
+                  <button
+                    key={`weave-${value}`}
+                    type="button"
+                    onClick={() => removeFromList("weavingTypes", value)}
+                    className={chipClass}
+                  >
+                    {value}
+                    <span aria-hidden>×</span>
+                  </button>
+                ))}
+                {filters.materials.map((value) => (
+                  <button
+                    key={`mat-${value}`}
+                    type="button"
+                    onClick={() => removeFromList("materials", value)}
+                    className={chipClass}
+                  >
+                    {value}
+                    <span aria-hidden>×</span>
+                  </button>
+                ))}
+                {filters.patterns.map((value) => (
+                  <button
+                    key={`pat-${value}`}
+                    type="button"
+                    onClick={() => removeFromList("patterns", value)}
+                    className={chipClass}
+                  >
+                    {value}
+                    <span aria-hidden>×</span>
+                  </button>
+                ))}
+                {filters.thicknesses.map((value) => (
+                  <button
+                    key={`thick-${value}`}
+                    type="button"
+                    onClick={() => removeFromList("thicknesses", value)}
+                    className={chipClass}
+                  >
+                    {value}
+                    <span aria-hidden>×</span>
+                  </button>
+                ))}
+                {filters.sizes.map((size) => (
+                  <button
+                    key={size}
+                    type="button"
+                    onClick={() => removeFromList("sizes", size)}
+                    className={chipClass}
+                  >
+                    {size}
+                    <span aria-hidden>×</span>
+                  </button>
+                ))}
+                {filters.colors.map((color) => (
+                  <button
+                    key={color}
+                    type="button"
+                    onClick={() => removeFromList("colors", color)}
+                    className={`${chipClass} capitalize`}
+                  >
+                    {color}
+                    <span aria-hidden>×</span>
+                  </button>
+                ))}
+              </div>
+            ) : (
+              <p className="hidden text-sm text-rc-muted sm:block">
+                <span className="font-semibold text-rc-navy">{sorted.length}</span>{" "}
+                products
+              </p>
+            )}
+          </div>
+
+          <label className="flex items-center gap-2 text-xs uppercase tracking-[0.14em] text-rc-navy">
+            <span className="font-semibold">Sort by</span>
+            <select
+              value={sort}
+              onChange={(e) => setSort(e.target.value as SortKey)}
+              className="border-0 border-b border-rc-navy bg-transparent py-1 text-xs font-medium normal-case tracking-normal text-rc-navy outline-none"
+            >
+              <option value="featured">Featured</option>
+              <option value="price-low">Price: Low to High</option>
+              <option value="price-high">Price: High to Low</option>
+              <option value="rating">Customer Rating</option>
+            </select>
+          </label>
+        </div>
+
+        {mobileFiltersOpen ? (
+          <div className="mb-6 border border-rc-border p-4 lg:hidden">
+            <ShopFiltersSidebar {...sidebarProps} />
+          </div>
+        ) : null}
+
+        {sorted.length === 0 ? (
+          <p className="py-16 text-center text-sm text-rc-muted">
+            No products match these filters.
+          </p>
+        ) : (
+          <ul className="grid grid-cols-2 gap-x-3 gap-y-6 sm:gap-x-4 md:grid-cols-3 lg:grid-cols-4 lg:gap-x-5 lg:gap-y-8">
+            {sorted.map((product) => (
+              <li key={product.id} className="min-w-0">
+                <ShopListingCard product={product} />
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
     </div>
   );
 }

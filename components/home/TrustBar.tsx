@@ -32,7 +32,7 @@ export function TrustBar() {
   return (
     <section
       className="border-t border-rc-border bg-rc-surface py-4 mt-10 md:mt-2 md:py-10"
-      aria-label="Why shop with RugCasa"
+      aria-label="Why shop with Rugs Bhadohi"
     >
       <div className="mx-auto max-w-7xl px-2 md:px-4">
         <ul className="grid grid-cols-4 gap-1.5 md:gap-4">

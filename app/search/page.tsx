@@ -3,8 +3,8 @@ import { Suspense } from "react";
 import { SearchPageView } from "@/components/search/SearchPageView";
 
 export const metadata: Metadata = {
-  title: "Search — RugCasa",
-  description: "Search rugs, carpets, and home décor on RugCasa.",
+  title: "Search — Rugs Bhadohi",
+  description: "Search rugs, carpets, and home décor on Rugs Bhadohi.",
 };
 
 function SearchFallback() {

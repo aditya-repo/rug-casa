@@ -164,6 +164,10 @@ function tabStyles(active: boolean) {
 export function MobileBottomNav() {
   const pathname = usePathname();
 
+  if (pathname.startsWith("/dashboard")) {
+    return null;
+  }
+
   const isHome = pathname === "/";
   const isCategories = pathname.startsWith("/categories");
   const isWishlist = pathname.startsWith("/wishlist");

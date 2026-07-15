@@ -11,8 +11,25 @@ export type PdpSizeOption = {
   cmLabel: string;
   /** Sale price for this size (rupees, no commas). */
   basePrice: number;
+  /** Lead-time / stock label under the size card. */
+  availabilityLabel: string;
   /** When true, opens contact — no numeric price in UI. */
   isCustom?: boolean;
+};
+
+export type PdpColorOption = {
+  id: string;
+  label: string;
+  /** Optional swatch image; falls back to hex if missing. */
+  imageSrc?: string;
+  swatch?: string;
+};
+
+export type PdpServiceOption = {
+  id: string;
+  label: string;
+  price: number;
+  description: string;
 };
 
 export type PdpFeatureCallout = {
@@ -30,6 +47,24 @@ export type PdpTabContent = {
   shippingHtml: string;
 };
 
+export type PdpCareItem = {
+  id: string;
+  text: string;
+};
+
+export type PdpInfoAccordions = {
+  /** Spec grid shown under Product Details. */
+  attributes: { label: string; value: string }[];
+  highlights: string[];
+  careItems: PdpCareItem[];
+  shippingBullets: string[];
+  designStory: {
+    title: string;
+    productName: string;
+    body: string;
+  };
+};
+
 export type PdpPromoBanner = {
   title: string;
   imageSrc: string;
@@ -41,15 +76,21 @@ export type ProductDetailModel = {
   product: ProductItem;
   images: PdpImage[];
   breadcrumbs: PdpBreadcrumb[];
+  subtitle: string;
+  itemCode: string;
   soldCount: number;
   badgeLabel: string | null;
+  colors: PdpColorOption[];
+  defaultColorId: string;
   sizes: PdpSizeOption[];
   defaultSizeId: string;
+  services: PdpServiceOption[];
   /** MRP multiplier vs computed sale from selected size (for strike line). */
   mrpFactor: number;
   features: PdpFeatureCallout[];
   trustRow: PdpTrustCallout[];
   tabs: PdpTabContent;
+  infoAccordions: PdpInfoAccordions;
   promo: PdpPromoBanner;
   /** Related products for PDP grid (excludes current). */
   youMayAlsoLike: ProductItem[];
@@ -65,6 +106,71 @@ function parseMrp(p: ProductItem): number {
 
 function pickYouMayAlsoLike(excludeId: string, limit: number): ProductItem[] {
   return catalogProducts.filter((x) => x.id !== excludeId).slice(0, limit);
+}
+
+const DEFAULT_SERVICES: PdpServiceOption[] = [
+  {
+    id: "anti-slip",
+    label: "Anti-Slip Mats",
+    price: 18200,
+    description: "Keeps the rug securely in place on hard floors.",
+  },
+  {
+    id: "stain-coat",
+    label: "Stain Resistance Coating",
+    price: 16520,
+    description: "Protective finish that helps resist everyday spills.",
+  },
+];
+
+export const DEFAULT_CARE_ITEMS: PdpCareItem[] = [
+  { id: "shed", text: "Shedding Is A Natural Property Of New Rug." },
+  { id: "brush", text: "DO NOT Brush Or Scrub The Rug." },
+  {
+    id: "vacuum",
+    text: "Only Vacuum Clean It Periodically. Avoid Using Vacuum Beater Brush Mode.",
+  },
+  { id: "spill", text: "If Spills Occur, Blot Immediately. Do Not Rub The Stain." },
+  { id: "rotate", text: "Rotate Occasionally To Equalize Wear." },
+  {
+    id: "furniture",
+    text: "Use Protectors Under The Legs Of Heavy Furniture To Avoid Flattening And Piling.",
+  },
+  {
+    id: "thread",
+    text: "If Thread Comes Out Do Not Pull The Yarn, Trim With Scissor.",
+  },
+  { id: "pro", text: "Periodic Professional Cleaning Recommended." },
+  { id: "fold", text: "DO NOT Fold The Rug." },
+  { id: "damp", text: "Avoid Using The Rug In Damp Or Wet Surface." },
+];
+
+export const DEFAULT_SHIPPING_BULLETS = [
+  "Free Shipping Anywhere In India.",
+  "Delivery Estimates: 3-10 Business Days For India & 6-12 Business Days For International (In Some Cases Custom Clearance Might Take Longer).",
+  '"15 Days Hassle Free Return" Is Valid For Purchase Within India Only (Not Applicable For Custom Rug).',
+  "Rug Sizes, Designs, And Patterns May Vary Slightly.",
+  "Actual Rug Colors May Differ Due To Lighting And Device Screen Settings.",
+  "Visual Appearance May Change Based On Rug Placement And Viewing Angle.",
+];
+
+function buildInfoAccordions(input: {
+  productName: string;
+  attributes: { label: string; value: string }[];
+  highlights: string[];
+  designBody: string;
+}): PdpInfoAccordions {
+  return {
+    attributes: input.attributes,
+    highlights: input.highlights,
+    careItems: DEFAULT_CARE_ITEMS,
+    shippingBullets: DEFAULT_SHIPPING_BULLETS,
+    designStory: {
+      title: "The Design Story",
+      productName: input.productName,
+      body: input.designBody,
+    },
+  };
 }
 
 const MEDALLION_IMAGES: PdpImage[] = [
@@ -112,46 +218,67 @@ function buildMedallionDetail(p: ProductItem): ProductDetailModel {
     images: MEDALLION_IMAGES,
     breadcrumbs: [
       { label: "Home", href: "/" },
-      { label: "Area Rugs", href: "/shop?category=area-rugs" },
+      { label: "Rugs", href: "/shop" },
       { label: "Traditional Rugs", href: "/shop" },
       { label: p.name, href: null },
     ],
+    subtitle: `${p.brand} Handwoven Wool Rug ${p.dimensions || "Rectangle"}`.trim(),
+    itemCode: "RUG-MED-001",
     soldCount: 250,
     badgeLabel: "Bestseller",
+    colors: [
+      {
+        id: "indigo",
+        label: "Indigo Blue/Indigo Blue",
+        imageSrc: MEDALLION_IMAGES[0].src,
+      },
+      {
+        id: "ivory",
+        label: "Ivory/Cream",
+        imageSrc: MEDALLION_IMAGES[1].src,
+      },
+    ],
+    defaultColorId: "indigo",
     sizes: [
       {
         id: "s35",
-        label: "3 x 5 ft",
-        cmLabel: "90 x 150 cm",
+        label: "3x5 ft",
+        cmLabel: "90x150 cm",
         basePrice: 3999,
+        availabilityLabel: "Ready To Ship",
       },
       {
         id: "s46",
-        label: "4 x 6 ft",
-        cmLabel: "120 x 180 cm",
+        label: "4x6 ft",
+        cmLabel: "120x180 cm",
         basePrice: 4299,
+        availabilityLabel: "Ready To Ship",
       },
       {
         id: "s57",
-        label: "5 x 7 ft",
-        cmLabel: "150 x 210 cm",
+        label: "5x7 ft",
+        cmLabel: "150x210 cm",
         basePrice: 4999,
+        availabilityLabel: "Ready To Ship",
       },
       {
         id: "s810",
-        label: "8 x 10 ft",
-        cmLabel: "240 x 300 cm",
+        label: "8x10 ft",
+        cmLabel: "240x300 cm",
         basePrice: 8999,
+        availabilityLabel: "Ready In 15 Days",
       },
       {
         id: "custom",
         label: "Custom size",
         cmLabel: "Contact us",
         basePrice: 4999,
+        availabilityLabel: "Made To Order",
         isCustom: true,
       },
     ],
     defaultSizeId: "s57",
+    services: DEFAULT_SERVICES,
     mrpFactor: 7999 / 4999,
     features: [
       { title: "100% Premium Quality", subtitle: "Built to Last" },
@@ -185,6 +312,20 @@ function buildMedallionDetail(p: ProductItem): ProductDetailModel {
       shippingHtml:
         "Orders ship within 2–4 business days. Free standard delivery across India. Easy 7-day returns in original condition — see our return policy for full details.",
     },
+    infoAccordions: buildInfoAccordions({
+      productName: p.name,
+      attributes: [
+        { label: "PSFT", value: "₹799/Sqft" },
+        { label: "Material", value: "Wool" },
+        { label: "Weaving", value: "Hand-knotted" },
+        { label: "Texture", value: "Soft" },
+        { label: "Pile Thickness", value: "12 Mm" },
+        { label: "Shape", value: "Rectangle" },
+      ],
+      highlights: ["Traditional", "Hand-knotted", "6 Months Warranty"],
+      designBody:
+        "A classic medallion composition with rich tonal depth — designed to anchor living rooms with heritage character while remaining easy to live with day to day.",
+    }),
     promo: {
       title: "Style That Transforms Your Space",
       imageSrc:
@@ -202,52 +343,71 @@ function buildGenericDetail(p: ProductItem): ProductDetailModel {
   const factor = mrp / Math.max(base, 1);
 
   const img = { src: p.imageSrc, alt: p.imageAlt };
-  const images: PdpImage[] = [img, img, img, img, img];
+  const images: PdpImage[] = p.imageSrc
+    ? [img, img, img, img, img]
+    : [];
 
   return {
     product: p,
     images,
     breadcrumbs: [
       { label: "Home", href: "/" },
-      { label: "Shop", href: "/shop" },
+      { label: "Rugs", href: "/shop" },
       { label: p.name, href: null },
     ],
+    subtitle: `${p.brand} ${p.name}${p.dimensions ? ` ${p.dimensions}` : ""}`.trim(),
+    itemCode: `RUG-${p.id.slice(0, 8).toUpperCase()}`,
     soldCount: Math.max(12, Math.round(p.reviews * 1.2)),
     badgeLabel: p.tag === "Bestseller" ? "Bestseller" : p.tag ?? null,
+    colors: [
+      {
+        id: "default",
+        label: "As shown",
+        imageSrc: p.imageSrc || undefined,
+        swatch: "#9ca3af",
+      },
+    ],
+    defaultColorId: "default",
     sizes: [
       {
         id: "g-s",
-        label: "Small",
-        cmLabel: "90 x 150 cm",
+        label: "3x5 ft",
+        cmLabel: "90x150 cm",
         basePrice: Math.round(base * 0.85),
+        availabilityLabel: "Ready To Ship",
       },
       {
         id: "g-m",
-        label: "Medium",
-        cmLabel: "120 x 180 cm",
+        label: "5x7 ft",
+        cmLabel: "150x210 cm",
         basePrice: base,
+        availabilityLabel: "Ready To Ship",
       },
       {
         id: "g-l",
-        label: "Large",
-        cmLabel: "150 x 210 cm",
+        label: "8x10 ft",
+        cmLabel: "240x300 cm",
         basePrice: Math.round(base * 1.15),
+        availabilityLabel: "Ready In 15 Days",
       },
       {
         id: "g-xl",
-        label: "Extra large",
-        cmLabel: "200 x 300 cm",
+        label: "9x12 ft",
+        cmLabel: "270x360 cm",
         basePrice: Math.round(base * 1.45),
+        availabilityLabel: "Ready In 15 Days",
       },
       {
         id: "g-custom",
         label: "Custom size",
         cmLabel: "Contact us",
         basePrice: base,
+        availabilityLabel: "Made To Order",
         isCustom: true,
       },
     ],
     defaultSizeId: "g-m",
+    services: DEFAULT_SERVICES,
     mrpFactor: factor,
     features: [
       { title: "100% Premium Quality", subtitle: "Built to Last" },
@@ -269,7 +429,7 @@ function buildGenericDetail(p: ProductItem): ProductDetailModel {
       ],
       specifications: [
         { label: "Brand", value: p.brand },
-        { label: "Collection", value: "RugCasa Signature" },
+        { label: "Collection", value: "Rugs Bhadohi Signature" },
         { label: "Availability", value: "In stock" },
       ],
       careHtml:
@@ -277,6 +437,17 @@ function buildGenericDetail(p: ProductItem): ProductDetailModel {
       shippingHtml:
         "Ships in 2–4 business days. Free delivery pan-India. 7-day easy returns when unused and in original packaging.",
     },
+    infoAccordions: buildInfoAccordions({
+      productName: p.name,
+      attributes: [
+        { label: "Brand", value: p.brand },
+        { label: "Collection", value: "Rugs Bhadohi Signature" },
+        { label: "Size", value: p.dimensions || "Standard" },
+        { label: "Availability", value: "In stock" },
+      ],
+      highlights: ["Premium Quality", "Easy Care", "6 Months Warranty"],
+      designBody: `${p.name} brings thoughtful craft and everyday comfort together — a versatile piece designed to elevate your space with quiet confidence.`,
+    }),
     promo: {
       title: "Complete the Look",
       imageSrc:
@@ -294,3 +465,5 @@ export function getProductDetailModel(id: string): ProductDetailModel | null {
   if (p.id === "na-medallion") return buildMedallionDetail(p);
   return buildGenericDetail(p);
 }
+
+export { DEFAULT_SERVICES, buildInfoAccordions };

@@ -19,24 +19,32 @@ export type ProductCardProps = {
   product: ProductItem;
   /** Link for the product image + title area. Defaults to `/shop/[id]`. */
   href?: string;
+  /** When false, hides rating and review count. Defaults to true. */
+  showRating?: boolean;
 };
 
-export function ProductCard({ product, href }: ProductCardProps) {
+export function ProductCard({ product, href, showRating = true }: ProductCardProps) {
   const productHref = href ?? `/product/${product.id}`;
 
   return (
-    <article className="flex h-full min-h-0 flex-col overflow-hidden rounded-md border border-rc-border bg-white">
+    <article className="flex h-full min-h-0 flex-col bg-white">
       <Link
         href={productHref}
-        className="relative block aspect-[16/9] w-full shrink-0 overflow-hidden"
+        className="relative block aspect-[16/9] w-full shrink-0 overflow-hidden border border-rc-border bg-rc-surface"
       >
-        <Image
-          src={product.imageSrc}
-          alt={product.imageAlt}
-          fill
-          sizes="(max-width: 768px) 50vw, min(25vw, 320px)"
-          className="object-cover transition-transform duration-300 hover:scale-105"
-        />
+        {product.imageSrc ? (
+          <Image
+            src={product.imageSrc}
+            alt={product.imageAlt}
+            fill
+            sizes="(max-width: 768px) 50vw, min(25vw, 320px)"
+            className="object-cover transition-transform duration-300 hover:scale-105"
+          />
+        ) : (
+          <span className="flex h-full items-center justify-center text-xs text-rc-muted">
+            No image
+          </span>
+        )}
         {product.tag ? (
           <span
             className={`absolute left-2 top-2 rounded px-1.5 py-0.5 text-[10px] font-semibold text-white ${
@@ -52,21 +60,20 @@ export function ProductCard({ product, href }: ProductCardProps) {
         ) : null}
       </Link>
       <div className="flex flex-1 flex-col space-y-1 p-2.5">
-        <div className="flex items-center gap-1.5 text-[11px] text-rc-navy">
-          <span className="font-semibold">{product.rating.toFixed(1)}</span>
-          <Star />
-          <span className="h-3 w-px shrink-0 bg-rc-border" aria-hidden />
-          <span className="text-rc-muted">{product.reviews}</span>
-        </div>
+        {showRating ? (
+          <div className="flex items-center gap-1.5 text-[11px] text-rc-navy">
+            <span className="font-semibold">{product.rating.toFixed(1)}</span>
+            <Star />
+            <span className="h-3 w-px shrink-0 bg-rc-border" aria-hidden />
+            <span className="text-rc-muted">{product.reviews}</span>
+          </div>
+        ) : null}
         <Link href={productHref} className="block min-w-0">
           <p className="truncate text-xs font-bold text-rc-navy md:text-sm">
             {product.brand}
           </p>
           <p className="line-clamp-2 text-[11px] font-normal text-rc-muted md:text-xs">
             {product.name}
-          </p>
-          <p className="mt-0.5 text-[10px] font-medium text-rc-muted md:text-[11px]">
-            {product.dimensions}
           </p>
         </Link>
         <div className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5 pt-0.5">

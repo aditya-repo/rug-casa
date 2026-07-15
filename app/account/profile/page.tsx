@@ -11,8 +11,8 @@ import { SiteFooter } from "@/components/layout/SiteFooter";
 import { UtilityBar } from "@/components/layout/UtilityBar";
 
 export const metadata: Metadata = {
-  title: "Profile Information — RugCasa",
-  description: "View and update your RugCasa account profile.",
+  title: "Profile Information — Rugs Bhadohi",
+  description: "View and update your Rugs Bhadohi account profile.",
 };
 
 export default function AccountProfilePage() {

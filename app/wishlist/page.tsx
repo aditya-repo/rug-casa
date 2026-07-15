@@ -12,7 +12,7 @@ import { UtilityBar } from "@/components/layout/UtilityBar";
 import { getWishlistProducts } from "@/lib/data/wishlist";
 
 export const metadata: Metadata = {
-  title: "Wishlist — RugCasa",
+  title: "Wishlist — Rugs Bhadohi",
   description:
     "Rugs you have saved. Sign in later to sync your wishlist across devices.",
 };

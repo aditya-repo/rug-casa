@@ -39,7 +39,7 @@ export const defaultAddresses: SavedAddress[] = [
     label: "work",
     fullName: "Arjun Sharma",
     phone: "+91 98765 43210",
-    line1: "RugCasa Studio, 12 Industrial Lane",
+    line1: "Rugs Bhadohi Studio, 12 Industrial Lane",
     line2: "Unit 3B",
     city: "Mumbai",
     state: "Maharashtra",
