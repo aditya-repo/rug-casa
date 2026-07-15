@@ -58,7 +58,7 @@ function fromCollection(collection: ApiCollection): CollectionFormValues {
     description: collection.description ?? "",
     image: collection.image ?? "",
     sortOrder: collection.sortOrder,
-    status: collection.status,
+    status: collection.status ?? "ACTIVE",
   };
 }
 
