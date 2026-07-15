@@ -180,7 +180,7 @@ export function CollectionsManager({ initialCollections }: CollectionsManagerPro
                   <td className="px-4 py-3 font-mono text-xs text-neutral-500">{item.slug}</td>
                   <td className="px-4 py-3">{item._count?.products ?? 0}</td>
                   <td className="px-4 py-3">
-                    <StatusBadge status={mapStatusToUi(item.status)} />
+                    <StatusBadge status={mapStatusToUi(item.status ?? "ACTIVE")} />
                   </td>
                   <td className="px-4 py-3">
                     <div className="flex gap-2">
