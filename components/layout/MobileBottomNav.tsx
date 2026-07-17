@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { CartCountBadge } from "@/components/cart/CartNavLink";
 
 function IconHome({ active, className = "h-6 w-6" }: { active: boolean; className?: string }) {
   if (active) {
@@ -150,8 +151,6 @@ function IconCartTab({ active, className = "h-6 w-6" }: { active: boolean; class
   );
 }
 
-const CART_COUNT = 0;
-
 function tabStyles(active: boolean) {
   return [
     "flex min-w-0 flex-1 flex-col items-center gap-1 py-1.5 mx-0.5 transition-colors",
@@ -230,9 +229,7 @@ export function MobileBottomNav() {
       >
         <span className="relative inline-flex shrink-0">
           <IconCartTab active={isCart} className="h-6 w-6" />
-          <span className="absolute -right-1.5 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-rc-navy px-1 text-[9px] font-bold leading-none text-white">
-            {CART_COUNT}
-          </span>
+          <CartCountBadge />
         </span>
         <span className="max-w-full truncate text-center text-[10px] leading-tight">
           Cart

@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { redirect } from "next/navigation";
+import { auth } from "@/auth";
 import {
   AccountBreadcrumb,
   DesktopAccountSidebar,
@@ -8,17 +10,51 @@ import { ProfileInformationBody } from "@/components/account/ProfileInformationB
 import { IconArrowLeft } from "@/components/layout/icons";
 import { HeaderAndNav } from "@/components/layout/HeaderAndNav";
 import { SiteFooter } from "@/components/layout/SiteFooter";
-import { UtilityBar } from "@/components/layout/UtilityBar";
+import { getMyCustomerProfile } from "@/lib/auth/profile-actions";
+import {
+  syncCustomerFromGoogle,
+  type CustomerProfile,
+} from "@/lib/api/customer-profile";
 
 export const metadata: Metadata = {
   title: "Profile Information — Rugs Bhadohi",
   description: "View and update your Rugs Bhadohi account profile.",
 };
 
-export default function AccountProfilePage() {
+async function resolveProfile(): Promise<CustomerProfile | null> {
+  const session = await auth();
+  if (!session?.user?.email) return null;
+
+  const existing = await getMyCustomerProfile();
+  if (existing) return existing;
+
+  const fullName = session.user.name?.trim() || session.user.email.split("@")[0] || "Customer";
+  const parts = fullName.split(/\s+/);
+  return syncCustomerFromGoogle({
+    email: session.user.email,
+    firstName: parts[0] || "Customer",
+    lastName: parts.slice(1).join(" "),
+    image: session.user.image ?? null,
+  });
+}
+
+export default async function AccountProfilePage() {
+  const session = await auth();
+  if (!session?.user) {
+    redirect("/signin?callbackUrl=/account/profile");
+  }
+
+  let profile: CustomerProfile | null = null;
+  let loadError = "";
+  try {
+    profile = await resolveProfile();
+  } catch (error) {
+    loadError =
+      error instanceof Error ? error.message : "Could not load your profile.";
+  }
+
   return (
     <div className="flex min-h-full flex-col bg-white">
-      <UtilityBar />
       <HeaderAndNav />
       <main className="flex-1 bg-white pb-10 md:pb-14">
         <div className="mx-auto max-w-7xl px-4 py-4 md:py-8">
@@ -78,7 +114,15 @@ export default function AccountProfilePage() {
                 </h1>
               </header>
 
-              <ProfileInformationBody />
+              {loadError ? (
+                <p className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
+                  {loadError}
+                </p>
+              ) : profile ? (
+                <ProfileInformationBody initialProfile={profile} />
+              ) : (
+                <p className="text-sm text-rc-muted">No profile found.</p>
+              )}
             </div>
           </div>
         </div>

@@ -37,6 +37,8 @@ type ShopProductGridProps = {
   categories?: CategoryItem[];
   collections?: ShopFilterOption[];
   initialCategorySlug?: string;
+  isAuthenticated?: boolean;
+  wishlistedIds?: string[];
 };
 
 const EMPTY_FILTERS: ShopFilterState = {
@@ -56,7 +58,10 @@ export function ShopProductGrid({
   categories = [],
   collections = [],
   initialCategorySlug,
+  isAuthenticated = false,
+  wishlistedIds = [],
 }: ShopProductGridProps) {
+  const wishlistedSet = useMemo(() => new Set(wishlistedIds), [wishlistedIds]);
   const [sort, setSort] = useState<SortKey>("featured");
   const [filters, setFilters] = useState<ShopFilterState>({
     ...EMPTY_FILTERS,
@@ -307,7 +312,11 @@ export function ShopProductGrid({
           <ul className="grid grid-cols-2 gap-x-3 gap-y-6 sm:gap-x-4 md:grid-cols-3 lg:grid-cols-4 lg:gap-x-5 lg:gap-y-8">
             {sorted.map((product) => (
               <li key={product.id} className="min-w-0">
-                <ShopListingCard product={product} />
+                <ShopListingCard
+                  product={product}
+                  isAuthenticated={isAuthenticated}
+                  initialWishlisted={wishlistedSet.has(product.id)}
+                />
               </li>
             ))}
           </ul>

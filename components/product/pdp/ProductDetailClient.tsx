@@ -15,17 +15,19 @@ import { PdpCraftPillarsSection } from "@/components/product/pdp/PdpCraftPillars
 import { PdpExploreCollectionsCarousel } from "@/components/product/pdp/PdpExploreCollectionsCarousel";
 import { PdpHowItWorksSection } from "@/components/product/pdp/PdpHowItWorksSection";
 import { PdpInfoAccordionsPanel } from "@/components/product/pdp/PdpInfoAccordions";
+import { useCart } from "@/components/cart/CartProvider";
 import {
   IconBadge,
   IconChevronLeftThin,
   IconChevronRightThin,
   IconGift,
-  IconHeart,
   IconMedal,
   IconReturn,
 } from "@/components/layout/icons";
+import { WishlistHeartButton } from "@/components/wishlist/WishlistHeartButton";
 import { companyWhatsAppUrl } from "@/lib/data/company";
 import type { ProductDetailModel } from "@/lib/data/product-detail";
+import { CART_MAX_QTY } from "@/lib/cart/types";
 
 function getActiveGalleryIndex(root: HTMLDivElement, count: number): number {
   const slides = [...root.children] as HTMLElement[];
@@ -105,7 +107,15 @@ const selectedSizeClass =
 const idleSizeClass =
   "border-rc-border bg-white text-rc-navy hover:border-rc-muted-light";
 
-export function ProductDetailClient({ model }: { model: ProductDetailModel }) {
+export function ProductDetailClient({
+  model,
+  isAuthenticated = false,
+  initialWishlisted = false,
+}: {
+  model: ProductDetailModel;
+  isAuthenticated?: boolean;
+  initialWishlisted?: boolean;
+}) {
   const {
     product,
     images,
@@ -125,8 +135,12 @@ export function ProductDetailClient({ model }: { model: ProductDetailModel }) {
   const [sizeId, setSizeId] = useState(model.defaultSizeId);
   const [colorId, setColorId] = useState(model.defaultColorId);
   const [qty, setQty] = useState(1);
-  const [wishlisted, setWishlisted] = useState(false);
   const [selectedServices, setSelectedServices] = useState<string[]>([]);
+  const [cartNotice, setCartNotice] = useState<{
+    type: "ok" | "error";
+    message: string;
+  } | null>(null);
+  const { addItem } = useCart();
 
   const flushSlideIndex = useCallback(() => {
     const el = galleryScrollerRef.current;
@@ -250,6 +264,45 @@ export function ProductDetailClient({ model }: { model: ProductDetailModel }) {
     } catch {
       /* ignore */
     }
+  }
+
+  function handleAddToCart() {
+    if (size?.isCustom || unitSale == null) {
+      setCartNotice({
+        type: "error",
+        message: "Custom sizes need a quote — message us on WhatsApp.",
+      });
+      return;
+    }
+
+    const selectedServiceRows = services.filter((s) =>
+      selectedServices.includes(s.id),
+    );
+    const result = addItem({
+      productId: product.id,
+      name: product.name,
+      brand: product.brand,
+      imageSrc: product.imageSrc || images[0]?.src || "",
+      imageAlt: product.imageAlt || product.name,
+      sizeId: size.id,
+      sizeLabel: size.label,
+      colorId: color?.id ?? "default",
+      colorLabel: color?.label ?? "As shown",
+      unitPrice: unitSale,
+      unitMrp: unitMrp ?? unitSale,
+      quantity: Math.min(CART_MAX_QTY, Math.max(1, qty)),
+      serviceIds: selectedServiceRows.map((s) => s.id),
+      serviceLabels: selectedServiceRows.map((s) => s.label),
+      servicesPerUnit: selectedServiceRows.reduce((sum, s) => sum + s.price, 0),
+    });
+
+    if (!result.ok) {
+      setCartNotice({ type: "error", message: result.error });
+      return;
+    }
+
+    setCartNotice({ type: "ok", message: "Added to cart" });
+    window.setTimeout(() => setCartNotice(null), 2500);
   }
 
   const galleryImages = images.length > 0 ? images : [{ src: "", alt: product.name }];
@@ -387,17 +440,14 @@ export function ProductDetailClient({ model }: { model: ProductDetailModel }) {
               {product.name}
             </h1>
             <div className="flex shrink-0 items-center gap-1 pt-1">
-              <button
-                type="button"
-                onClick={() => setWishlisted((w) => !w)}
-                className={`flex h-9 w-9 items-center justify-center rounded-full text-rc-navy transition-colors hover:bg-rc-surface ${
-                  wishlisted ? "text-red-500" : ""
-                }`}
-                aria-pressed={wishlisted}
-                aria-label={wishlisted ? "Remove from wishlist" : "Add to wishlist"}
-              >
-                <IconHeart className={`h-5 w-5 ${wishlisted ? "fill-current" : ""}`} />
-              </button>
+              <WishlistHeartButton
+                productId={product.id}
+                isAuthenticated={isAuthenticated}
+                initialWishlisted={initialWishlisted}
+                className="flex h-9 w-9 items-center justify-center rounded-full text-rc-navy transition-colors hover:bg-rc-surface"
+                iconClassName="h-5 w-5"
+                activeClassName="fill-current text-red-500"
+              />
               <button
                 type="button"
                 onClick={handleShare}
@@ -537,7 +587,7 @@ export function ProductDetailClient({ model }: { model: ProductDetailModel }) {
                   <button
                     type="button"
                     className="px-3.5 py-2.5 text-rc-navy hover:bg-rc-surface"
-                    onClick={() => setQty((q) => q + 1)}
+                    onClick={() => setQty((q) => Math.min(CART_MAX_QTY, q + 1))}
                     aria-label="Increase quantity"
                   >
                     +
@@ -589,9 +639,10 @@ export function ProductDetailClient({ model }: { model: ProductDetailModel }) {
             <div className="flex flex-col gap-3 sm:flex-row">
               <button
                 type="button"
+                onClick={handleAddToCart}
                 className="flex flex-1 items-center justify-center bg-rc-navy px-4 py-3.5 text-sm font-semibold uppercase tracking-[0.08em] text-white transition-colors hover:bg-rc-navy-dark"
               >
-                Add to Cart
+                {cartNotice?.type === "ok" ? "Added ✓" : "Add to Cart"}
               </button>
               <a
                 href={whatsappHref}
@@ -603,6 +654,25 @@ export function ProductDetailClient({ model }: { model: ProductDetailModel }) {
                 WhatsApp
               </a>
             </div>
+
+            {cartNotice ? (
+              <p
+                className={`text-center text-sm ${
+                  cartNotice.type === "ok" ? "text-emerald-700" : "text-red-700"
+                }`}
+              >
+                {cartNotice.type === "ok" ? (
+                  <>
+                    {cartNotice.message}.{" "}
+                    <Link href="/cart" className="font-semibold underline-offset-2 hover:underline">
+                      View cart
+                    </Link>
+                  </>
+                ) : (
+                  cartNotice.message
+                )}
+              </p>
+            ) : null}
 
             <p className="text-center text-sm text-rc-muted">
               Need Help?{" "}
@@ -633,9 +703,10 @@ export function ProductDetailClient({ model }: { model: ProductDetailModel }) {
       >
         <button
           type="button"
+          onClick={handleAddToCart}
           className="flex flex-1 items-center justify-center bg-rc-navy py-3.5 text-sm font-semibold uppercase tracking-[0.06em] text-white"
         >
-          Add to Cart
+          {cartNotice?.type === "ok" ? "Added ✓" : "Add to Cart"}
         </button>
         <a
           href={whatsappHref}

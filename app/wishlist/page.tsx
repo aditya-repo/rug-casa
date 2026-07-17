@@ -9,16 +9,15 @@ import { IconArrowLeft } from "@/components/layout/icons";
 import { HeaderAndNav } from "@/components/layout/HeaderAndNav";
 import { SiteFooter } from "@/components/layout/SiteFooter";
 import { UtilityBar } from "@/components/layout/UtilityBar";
-import { getWishlistProducts } from "@/lib/data/wishlist";
+import { getMyWishlistProducts } from "@/lib/auth/wishlist-actions";
 
 export const metadata: Metadata = {
   title: "Wishlist — Rugs Bhadohi",
-  description:
-    "Rugs you have saved. Sign in later to sync your wishlist across devices.",
+  description: "Rugs you have saved to your Rugs Bhadohi wishlist.",
 };
 
-export default function WishlistPage() {
-  const products = getWishlistProducts();
+export default async function WishlistPage() {
+  const products = await getMyWishlistProducts();
 
   return (
     <div className="flex min-h-full flex-col bg-white">
@@ -26,7 +25,6 @@ export default function WishlistPage() {
       <HeaderAndNav />
       <main className="flex-1 bg-white pb-10 md:pb-14">
         <div className="mx-auto max-w-7xl px-4 py-4 md:py-8">
-          {/* Desktop: account shell; center = wishlist only */}
           <div className="hidden md:block">
             <AccountBreadcrumb
               items={[
@@ -58,7 +56,6 @@ export default function WishlistPage() {
             </div>
           </div>
 
-          {/* Mobile: full-width wishlist (unchanged) */}
           <div className="md:hidden">
             <div className="flex min-w-0 items-center gap-1.5">
               <Link

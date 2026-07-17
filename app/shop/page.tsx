@@ -3,12 +3,14 @@ import Link from "next/link";
 import { ShopProductGrid } from "@/components/shop/ShopProductGrid";
 import { HeaderAndNav } from "@/components/layout/HeaderAndNav";
 import { SiteFooter } from "@/components/layout/SiteFooter";
+import { auth } from "@/auth";
 import {
   fetchPublicHomepageCategories,
   fetchPublicShopCategories,
 } from "@/lib/api/categories";
 import { fetchPublicHomepageCollections } from "@/lib/api/collections";
 import { fetchPublicShopProducts } from "@/lib/api/shop-products";
+import { getMyWishlistProductIds } from "@/lib/auth/wishlist-actions";
 
 export const metadata: Metadata = {
   title: "Shop All Rugs — Rugs Bhadohi",
@@ -24,7 +26,10 @@ export default async function ShopPage({
   searchParams: SearchParams;
 }) {
   const { category } = await searchParams;
-  const [homepageCategories, shopCategories, collections, catalog] =
+  const session = await auth();
+  const isAuthenticated = Boolean(session?.user?.email);
+
+  const [homepageCategories, shopCategories, collections, catalog, wishlistedIds] =
     await Promise.all([
       fetchPublicHomepageCategories(),
       fetchPublicShopCategories(),
@@ -33,6 +38,7 @@ export default async function ShopPage({
         limit: 100,
         sort: "featured",
       }),
+      isAuthenticated ? getMyWishlistProductIds() : Promise.resolve([] as string[]),
     ]);
   const categories = shopCategories.length > 0 ? shopCategories : homepageCategories;
   const categoryMeta = category
@@ -102,6 +108,8 @@ export default async function ShopPage({
               categories={categories}
               collections={collectionOptions}
               initialCategorySlug={category}
+              isAuthenticated={isAuthenticated}
+              wishlistedIds={wishlistedIds}
             />
           </div>
         </div>

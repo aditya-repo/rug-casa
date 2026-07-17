@@ -1,7 +1,7 @@
 "use client";
 
-import { useCallback, useEffect, useId, useRef, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useEffect, useId, useRef, useState } from "react";
+import { signOutAction } from "@/lib/auth/actions";
 import { IconLogout } from "./account-icons";
 
 type LogoutConfirmButtonProps = {
@@ -17,18 +17,18 @@ const triggerClass: Record<LogoutConfirmButtonProps["variant"], string> = {
 
 export function LogoutConfirmButton({ variant }: LogoutConfirmButtonProps) {
   const [open, setOpen] = useState(false);
-  const router = useRouter();
+  const [pending, setPending] = useState(false);
   const titleId = useId();
   const dialogRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (!open) return;
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") setOpen(false);
+      if (e.key === "Escape" && !pending) setOpen(false);
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [open]);
+  }, [open, pending]);
 
   useEffect(() => {
     if (!open) return;
@@ -37,11 +37,6 @@ export function LogoutConfirmButton({ variant }: LogoutConfirmButtonProps) {
     );
     el?.focus();
   }, [open]);
-
-  const confirmLogout = useCallback(() => {
-    setOpen(false);
-    router.push("/");
-  }, [router]);
 
   const iconClass = variant === "mobile" ? "h-4 w-4 shrink-0" : "h-5 w-5 shrink-0";
 
@@ -56,7 +51,9 @@ export function LogoutConfirmButton({ variant }: LogoutConfirmButtonProps) {
         <div
           className="fixed inset-0 z-[100] flex items-center justify-center bg-black/45 p-4"
           role="presentation"
-          onClick={() => setOpen(false)}
+          onClick={() => {
+            if (!pending) setOpen(false);
+          }}
         >
           <div
             ref={dialogRef}
@@ -81,17 +78,25 @@ export function LogoutConfirmButton({ variant }: LogoutConfirmButtonProps) {
                 type="button"
                 data-autofocus="logout-dialog"
                 onClick={() => setOpen(false)}
-                className="rounded-lg border border-neutral-200 bg-white px-4 py-2 text-sm font-semibold text-neutral-800 transition-colors hover:bg-neutral-50"
+                disabled={pending}
+                className="rounded-lg border border-neutral-200 bg-white px-4 py-2 text-sm font-semibold text-neutral-800 transition-colors hover:bg-neutral-50 disabled:opacity-60"
               >
                 Cancel
               </button>
-              <button
-                type="button"
-                onClick={confirmLogout}
-                className="rounded-lg bg-red-600 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-red-700"
+              <form
+                action={async () => {
+                  setPending(true);
+                  await signOutAction();
+                }}
               >
-                Log out
-              </button>
+                <button
+                  type="submit"
+                  disabled={pending}
+                  className="rounded-lg bg-red-600 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-red-700 disabled:opacity-60"
+                >
+                  {pending ? "Signing out…" : "Log out"}
+                </button>
+              </form>
             </div>
           </div>
         </div>

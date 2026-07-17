@@ -1,6 +1,7 @@
 import Link from "next/link";
+import { auth } from "@/auth";
+import { CartNavLink } from "@/components/cart/CartNavLink";
 import {
-  IconCart,
   IconHeart,
   IconSearch,
   IconTruck,
@@ -9,10 +10,7 @@ import {
 
 function Logo({ className = "" }: { className?: string }) {
   return (
-    <Link
-      href="/"
-      className={`font-heading text-center ${className}`}
-    >
+    <Link href="/" className={`font-heading text-center ${className}`}>
       <span className="block text-xl font-semibold tracking-tight text-rc-navy sm:text-2xl">
         Rugs Bhadohi
       </span>
@@ -20,7 +18,11 @@ function Logo({ className = "" }: { className?: string }) {
   );
 }
 
-export function HeaderAndNav() {
+export async function HeaderAndNav() {
+  const session = await auth();
+  const accountHref = session?.user ? "/account" : "/signin";
+  const accountLabel = session?.user ? "My Account" : "Sign in";
+
   return (
     <header className="sticky top-0 z-30 border-b border-rc-border bg-white">
       <div className="flex items-center justify-center gap-2 bg-rc-navy px-4 py-1.5 text-center text-xs text-white sm:text-sm">
@@ -41,22 +43,20 @@ export function HeaderAndNav() {
               <IconSearch className="h-5 w-5" />
             </Link>
             <Link
+              href={accountHref}
+              className="rounded-md p-1.5 hover:bg-rc-surface"
+              aria-label={accountLabel}
+            >
+              <IconUser className="h-5 w-5" />
+            </Link>
+            <Link
               href="/wishlist"
               className="rounded-md p-1.5 hover:bg-rc-surface"
               aria-label="Wishlist"
             >
               <IconHeart className="h-5 w-5" />
             </Link>
-            <Link
-              href="/cart"
-              className="relative rounded-md p-1.5 hover:bg-rc-surface"
-              aria-label="Shopping cart, 0 items"
-            >
-              <IconCart className="h-5 w-5" />
-              <span className="absolute right-0.5 top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-rc-accent px-1 text-[10px] font-semibold leading-none text-white">
-                0
-              </span>
-            </Link>
+            <CartNavLink />
           </div>
         </div>
       </div>
@@ -90,12 +90,12 @@ export function HeaderAndNav() {
         </form>
         <div className="flex shrink-0 items-center gap-5 text-rc-navy">
           <Link
-            href="/account"
+            href={accountHref}
             className="flex items-center gap-2.5 transition-opacity hover:opacity-85"
           >
             <IconUser className="h-5 w-5 shrink-0 text-rc-navy" />
             <span className="text-sm font-bold tracking-tight text-rc-navy">
-              My Account
+              {accountLabel}
             </span>
           </Link>
           <div className="flex items-center gap-3">
@@ -106,16 +106,7 @@ export function HeaderAndNav() {
             >
               <IconHeart className="h-5 w-5" />
             </Link>
-            <Link
-              href="/cart"
-              className="relative rounded-full p-1.5 text-rc-navy hover:bg-rc-surface"
-              aria-label="Shopping cart, 0 items"
-            >
-              <IconCart className="h-5 w-5" />
-              <span className="absolute right-0.5 top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-rc-accent px-1 text-[10px] font-semibold leading-none text-white">
-                0
-              </span>
-            </Link>
+            <CartNavLink className="relative rounded-full p-1.5 text-rc-navy hover:bg-rc-surface" />
           </div>
         </div>
       </div>

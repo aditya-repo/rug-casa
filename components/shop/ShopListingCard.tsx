@@ -2,12 +2,18 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useState } from "react";
-import { IconHeart } from "@/components/layout/icons";
+import { WishlistHeartButton } from "@/components/wishlist/WishlistHeartButton";
 import type { ProductItem } from "@/lib/data/products";
 
-export function ShopListingCard({ product }: { product: ProductItem }) {
-  const [wishlisted, setWishlisted] = useState(false);
+export function ShopListingCard({
+  product,
+  isAuthenticated = false,
+  initialWishlisted = false,
+}: {
+  product: ProductItem;
+  isAuthenticated?: boolean;
+  initialWishlisted?: boolean;
+}) {
   const href = `/product/${product.id}`;
 
   return (
@@ -31,17 +37,11 @@ export function ShopListingCard({ product }: { product: ProductItem }) {
             </span>
           )}
         </Link>
-        <button
-          type="button"
-          onClick={() => setWishlisted((v) => !v)}
-          className="absolute right-2 top-2 flex h-8 w-8 items-center justify-center rounded-full bg-white/90 text-rc-navy shadow-sm transition-colors hover:bg-white"
-          aria-label={wishlisted ? "Remove from wishlist" : "Add to wishlist"}
-          aria-pressed={wishlisted}
-        >
-          <IconHeart
-            className={`h-4 w-4 ${wishlisted ? "fill-rc-navy text-rc-navy" : ""}`}
-          />
-        </button>
+        <WishlistHeartButton
+          productId={product.id}
+          isAuthenticated={isAuthenticated}
+          initialWishlisted={initialWishlisted}
+        />
       </div>
 
       <Link href={href} className="mt-3 block px-1">

@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono, Playfair_Display } from "next/font/google";
+import { CartProvider } from "@/components/cart/CartProvider";
 import { MobileBottomNav } from "@/components/layout/MobileBottomNav";
 import { WhatsAppFab } from "@/components/layout/WhatsAppFab";
 import "./globals.css";
@@ -37,9 +38,11 @@ export default function RootLayout({
       className={`${geistSans.variable} ${geistMono.variable} ${playfair.variable} h-full antialiased`}
     >
       <body className="flex min-h-full flex-col bg-white pb-[calc(4.25rem+env(safe-area-inset-bottom,0px))] font-sans text-foreground md:pb-0">
-        {children}
-        <MobileBottomNav />
-        <WhatsAppFab />
+        <CartProvider>
+          {children}
+          <MobileBottomNav />
+          <WhatsAppFab />
+        </CartProvider>
       </body>
     </html>
   );

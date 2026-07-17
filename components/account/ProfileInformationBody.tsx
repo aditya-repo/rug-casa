@@ -1,6 +1,8 @@
 "use client";
 
-import { useCallback, useState } from "react";
+import { useCallback, useState, useTransition } from "react";
+import { saveMyCustomerProfile } from "@/lib/auth/profile-actions";
+import type { CustomerProfile } from "@/lib/api/customer-profile";
 
 export type ProfileFormState = {
   name: string;
@@ -8,14 +10,7 @@ export type ProfileFormState = {
   phone: string;
   gender: string;
   dateOfBirth: string;
-};
-
-const initialProfile: ProfileFormState = {
-  name: "Arjun Sharma",
-  email: "arjun@example.com",
-  phone: "+91 98765 43210",
-  gender: "male",
-  dateOfBirth: "1992-08-14",
+  image?: string | null;
 };
 
 const genderOptions = [
@@ -40,38 +35,90 @@ function formatDobForDisplay(iso: string) {
   });
 }
 
+function profileToForm(profile: CustomerProfile): ProfileFormState {
+  return {
+    name: profile.name || `${profile.firstName} ${profile.lastName}`.trim(),
+    email: profile.email,
+    phone: profile.phone || "",
+    gender: profile.gender || "unspecified",
+    dateOfBirth: profile.dateOfBirth || "",
+    image: profile.image,
+  };
+}
+
 const inputClass =
   "mt-1 w-full max-w-md rounded-lg border border-neutral-300 bg-white px-3 py-2 text-sm text-neutral-900 shadow-sm outline-none transition-colors focus:border-rc-accent focus:ring-1 focus:ring-rc-accent";
 
 const labelClass =
   "text-xs font-medium uppercase tracking-wide text-rc-muted md:text-neutral-500";
 
-export function ProfileInformationBody() {
-  const [saved, setSaved] = useState<ProfileFormState>(initialProfile);
-  const [draft, setDraft] = useState<ProfileFormState>(initialProfile);
+export function ProfileInformationBody({
+  initialProfile,
+}: {
+  initialProfile: CustomerProfile;
+}) {
+  const [saved, setSaved] = useState<ProfileFormState>(() =>
+    profileToForm(initialProfile),
+  );
+  const [draft, setDraft] = useState<ProfileFormState>(() =>
+    profileToForm(initialProfile),
+  );
   const [isEditing, setIsEditing] = useState(false);
+  const [error, setError] = useState("");
+  const [notice, setNotice] = useState("");
+  const [pending, startTransition] = useTransition();
 
   const startEdit = useCallback(() => {
     setDraft(saved);
+    setError("");
+    setNotice("");
     setIsEditing(true);
   }, [saved]);
 
   const cancel = useCallback(() => {
     setDraft(saved);
+    setError("");
     setIsEditing(false);
   }, [saved]);
 
   const save = useCallback(() => {
-    setSaved(draft);
-    setIsEditing(false);
+    setError("");
+    setNotice("");
+    startTransition(async () => {
+      const result = await saveMyCustomerProfile({
+        name: draft.name,
+        phone: draft.phone,
+        gender: draft.gender,
+        dateOfBirth: draft.dateOfBirth,
+      });
+      if (!result.ok) {
+        setError(result.error);
+        return;
+      }
+      const next = profileToForm(result.profile);
+      setSaved(next);
+      setDraft(next);
+      setIsEditing(false);
+      setNotice("Profile saved.");
+    });
   }, [draft]);
 
   return (
     <div className="rounded-lg border border-rc-border bg-white p-4 shadow-none md:rounded-[10px] md:border-neutral-200 md:p-5 md:shadow-[0_1px_3px_rgba(0,0,0,0.06)]">
       <div className="mb-4 flex flex-wrap items-center justify-between gap-2 border-b border-rc-border pb-3 md:border-neutral-100">
-        <h2 className="text-sm font-semibold text-rc-navy md:text-base md:text-neutral-900">
-          Your details
-        </h2>
+        <div className="flex min-w-0 items-center gap-3">
+          {saved.image ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={saved.image}
+              alt=""
+              className="h-10 w-10 rounded-full object-cover"
+            />
+          ) : null}
+          <h2 className="text-sm font-semibold text-rc-navy md:text-base md:text-neutral-900">
+            Your details
+          </h2>
+        </div>
         {!isEditing ? (
           <button
             type="button"
@@ -85,6 +132,7 @@ export function ProfileInformationBody() {
             <button
               type="button"
               onClick={cancel}
+              disabled={pending}
               className="rounded-lg border border-neutral-200 bg-white px-3 py-1.5 text-sm font-medium text-neutral-700 transition-colors hover:bg-neutral-50"
             >
               Cancel
@@ -92,20 +140,32 @@ export function ProfileInformationBody() {
             <button
               type="button"
               onClick={save}
-              className="rounded-lg bg-rc-navy px-3 py-1.5 text-sm font-semibold text-white transition-colors hover:bg-rc-navy-dark"
+              disabled={pending}
+              className="rounded-lg bg-rc-navy px-3 py-1.5 text-sm font-semibold text-white transition-colors hover:bg-rc-navy-dark disabled:opacity-60"
             >
-              Save
+              {pending ? "Saving…" : "Save"}
             </button>
           </div>
         )}
       </div>
+
+      {error ? (
+        <p className="mb-3 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-800">
+          {error}
+        </p>
+      ) : null}
+      {notice ? (
+        <p className="mb-3 rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-800">
+          {notice}
+        </p>
+      ) : null}
 
       {!isEditing ? (
         <dl className="space-y-4 text-sm md:space-y-3">
           <div>
             <dt className={labelClass}>Name</dt>
             <dd className="mt-0.5 font-semibold text-rc-navy md:font-medium md:text-neutral-900">
-              {saved.name}
+              {saved.name || "—"}
             </dd>
           </div>
           <div>
@@ -117,7 +177,7 @@ export function ProfileInformationBody() {
           <div>
             <dt className={labelClass}>Phone</dt>
             <dd className="mt-0.5 font-semibold text-rc-navy md:font-medium md:text-neutral-900">
-              {saved.phone}
+              {saved.phone || "—"}
             </dd>
           </div>
           <div>
@@ -152,6 +212,7 @@ export function ProfileInformationBody() {
               onChange={(e) => setDraft((d) => ({ ...d, name: e.target.value }))}
               className={inputClass}
               autoComplete="name"
+              required
             />
           </div>
           <div>
@@ -163,10 +224,13 @@ export function ProfileInformationBody() {
               name="email"
               type="email"
               value={draft.email}
-              onChange={(e) => setDraft((d) => ({ ...d, email: e.target.value }))}
-              className={inputClass}
+              readOnly
+              className={`${inputClass} bg-neutral-50 text-neutral-500`}
               autoComplete="email"
             />
+            <p className="mt-1 text-xs text-neutral-500">
+              Email comes from your Google account and cannot be changed here.
+            </p>
           </div>
           <div>
             <label htmlFor="profile-phone" className={labelClass}>
@@ -217,10 +281,6 @@ export function ProfileInformationBody() {
           </div>
         </form>
       )}
-
-      <p className="mt-4 text-xs text-neutral-500">
-        Demo only — wire Save to your profile API when ready.
-      </p>
     </div>
   );
 }

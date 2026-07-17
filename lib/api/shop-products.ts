@@ -14,7 +14,7 @@ export type ShopProductItem = ProductItem & {
   color: string;
 };
 
-type ApiPublicProduct = {
+export type ApiPublicProduct = {
   id: string;
   title: string;
   slug: string;
@@ -83,7 +83,7 @@ function pickTag(product: ApiPublicProduct): string | undefined {
   return undefined;
 }
 
-function mapPublicProduct(product: ApiPublicProduct): ShopProductItem {
+export function mapPublicProduct(product: ApiPublicProduct): ShopProductItem {
   const variant = product.variants?.[0];
   const attrs = (variant?.attributes ?? {}) as Record<string, string>;
   const featured = product.images?.find((i) => i.isFeatured) ?? product.images?.[0];

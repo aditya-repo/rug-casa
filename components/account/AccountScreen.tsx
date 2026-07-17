@@ -1,5 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
+import { auth } from "@/auth";
 import { HeaderAndNav } from "@/components/layout/HeaderAndNav";
 import { IconChevronRightThin } from "@/components/layout/icons";
 import { SiteFooter } from "@/components/layout/SiteFooter";
@@ -124,9 +125,16 @@ function DesktopAccountCenter() {
   );
 }
 
-function MobileAccountDashboard() {
+function MobileAccountDashboard({
+  displayName,
+  image,
+}: {
+  displayName: string;
+  image?: string | null;
+}) {
   const mobileNavItems = accountNavItems.filter((item) => item.id !== "profile");
   const gridCount = mobileNavItems.length;
+  const initial = (displayName.trim()[0] || "U").toUpperCase();
 
   return (
     <div className="space-y-3.5 pb-3">
@@ -139,11 +147,22 @@ function MobileAccountDashboard() {
           href="/account/profile"
           className="mt-2.5 flex items-center gap-2.5 rounded-lg border border-neutral-200 bg-white p-2.5 shadow-[0_1px_2px_rgba(0,0,0,0.05)] transition-colors active:bg-neutral-50"
         >
-          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#EDE9FE] text-sm font-semibold text-violet-800">
-            A
-          </div>
+          {image ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={image}
+              alt=""
+              className="h-10 w-10 shrink-0 rounded-full object-cover"
+            />
+          ) : (
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#EDE9FE] text-sm font-semibold text-violet-800">
+              {initial}
+            </div>
+          )}
           <div className="min-w-0 flex-1">
-            <p className="text-sm font-semibold text-neutral-900">Hi, Arjun Sharma</p>
+            <p className="truncate text-sm font-semibold text-neutral-900">
+              Hi, {displayName}
+            </p>
             <p className="mt-0.5 text-xs text-neutral-500">Welcome back!</p>
           </div>
           <IconChevronRightThin className="h-4 w-4 shrink-0 text-neutral-400" />
@@ -239,7 +258,13 @@ function MobileAccountDashboard() {
   );
 }
 
-export function AccountScreen() {
+export async function AccountScreen() {
+  const session = await auth();
+  const displayName =
+    session?.user?.name?.trim() ||
+    session?.user?.email?.split("@")[0] ||
+    "there";
+
   return (
     <div className="flex min-h-full flex-col bg-white">
       <UtilityBar />
@@ -259,7 +284,10 @@ export function AccountScreen() {
             </div>
           </div>
           <div className="md:hidden">
-            <MobileAccountDashboard />
+            <MobileAccountDashboard
+              displayName={displayName}
+              image={session?.user?.image}
+            />
           </div>
         </div>
       </main>

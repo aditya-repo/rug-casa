@@ -5,7 +5,6 @@ import { IconArrowLeft } from "@/components/layout/icons";
 import { HeaderAndNav } from "@/components/layout/HeaderAndNav";
 import { SiteFooter } from "@/components/layout/SiteFooter";
 import { UtilityBar } from "@/components/layout/UtilityBar";
-import { getCartLines } from "@/lib/data/cart";
 
 export const metadata: Metadata = {
   title: "Shopping Cart — Rugs Bhadohi",
@@ -14,8 +13,6 @@ export const metadata: Metadata = {
 };
 
 export default function CartPage() {
-  const lines = getCartLines();
-
   return (
     <div className="flex min-h-full flex-col bg-white">
       <UtilityBar />
@@ -53,14 +50,13 @@ export default function CartPage() {
               Shopping cart
             </h1>
             <p className="mt-2 max-w-2xl text-sm text-rc-muted md:text-base">
-              {lines.length === 0
-                ? "When you add rugs, they will appear here with sizes and prices."
-                : "Review your rugs and use + or − to change quantities. Removing the last unit removes the item from your cart."}
+              Review your rugs and use + or − to change quantities. Removing the
+              last unit removes the item from your cart.
             </p>
           </header>
 
           <div className="mt-6 md:mt-8">
-            <CartView lines={lines} />
+            <CartView />
           </div>
         </div>
       </main>
