@@ -29,10 +29,17 @@ export const accountNavItems: AccountNavEntry[] = [
   { id: "help", label: "Help & Support", href: "/help", Icon: IconHelpSupport },
 ];
 
-export type OrderStatus = "delivered" | "shipped" | "processing";
+export type OrderStatus =
+  | "delivered"
+  | "shipped"
+  | "processing"
+  | "cancelled"
+  | "failed"
+  | "pending_payment";
 
 export type RecentOrder = {
   id: string;
+  orderNumber: string;
   date: string;
   productName: string;
   size: string;
@@ -42,42 +49,3 @@ export type RecentOrder = {
   status: OrderStatus;
   actionLabel: "View Details" | "Track Order";
 };
-
-export const mockRecentOrders: RecentOrder[] = [
-  {
-    id: "RC12345",
-    date: "May 20, 2024",
-    productName: "Persian Medallion Rug",
-    size: "5 x 7 ft",
-    total: "₹4,999",
-    imageSrc:
-      "https://images.unsplash.com/photo-1586075010923-2dd4570fb338?w=160&h=160&fit=crop",
-    imageAlt: "Persian medallion rug",
-    status: "delivered",
-    actionLabel: "View Details",
-  },
-  {
-    id: "RC12346",
-    date: "May 18, 2024",
-    productName: "Modern Abstract Rug",
-    size: "6 x 9 ft",
-    total: "₹8,499",
-    imageSrc:
-      "https://images.unsplash.com/photo-1615529182904-14819c35db37?w=160&h=160&fit=crop",
-    imageAlt: "Modern abstract rug",
-    status: "shipped",
-    actionLabel: "Track Order",
-  },
-  {
-    id: "RC12347",
-    date: "May 15, 2024",
-    productName: "Kilim Runner",
-    size: "2.5 x 8 ft",
-    total: "₹3,299",
-    imageSrc:
-      "https://images.unsplash.com/photo-1600166898402-4ae75bbb0e93?w=160&h=160&fit=crop",
-    imageAlt: "Kilim runner rug",
-    status: "processing",
-    actionLabel: "View Details",
-  },
-];

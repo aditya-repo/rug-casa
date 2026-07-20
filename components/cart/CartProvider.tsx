@@ -6,9 +6,11 @@ import {
   useContext,
   useEffect,
   useMemo,
+  useRef,
   useState,
   type ReactNode,
 } from "react";
+import { clearMyCart, saveMyCart, syncMyCartFromGuest } from "@/lib/auth/cart-actions";
 import { readCartFromStorage, writeCartToStorage } from "@/lib/cart/storage";
 import {
   buildCartLineKey,
@@ -40,23 +42,60 @@ function clampQty(qty: number): number {
 export function CartProvider({ children }: { children: ReactNode }) {
   const [lines, setLines] = useState<CartLineItem[]>([]);
   const [ready, setReady] = useState(false);
+  const syncTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const signedInRef = useRef(false);
 
-  useEffect(() => {
-    setLines(readCartFromStorage());
-    setReady(true);
-
-    const sync = () => setLines(readCartFromStorage());
-    window.addEventListener("storage", sync);
-    window.addEventListener("rugs-bhadohi-cart-updated", sync);
-    return () => {
-      window.removeEventListener("storage", sync);
-      window.removeEventListener("rugs-bhadohi-cart-updated", sync);
-    };
+  const queueServerSave = useCallback((next: CartLineItem[]) => {
+    if (!signedInRef.current) return;
+    if (syncTimer.current) clearTimeout(syncTimer.current);
+    syncTimer.current = setTimeout(() => {
+      void saveMyCart(next);
+    }, 400);
   }, []);
 
-  const persist = useCallback((next: CartLineItem[]) => {
-    setLines(next);
-    writeCartToStorage(next);
+  const persist = useCallback(
+    (next: CartLineItem[]) => {
+      setLines(next);
+      writeCartToStorage(next);
+      queueServerSave(next);
+    },
+    [queueServerSave],
+  );
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function hydrate() {
+      const local = readCartFromStorage();
+      if (!cancelled) {
+        setLines(local);
+      }
+
+      const sync = await syncMyCartFromGuest(local);
+      if (cancelled) return;
+
+      if (sync.ok) {
+        signedInRef.current = true;
+        setLines(sync.items);
+        writeCartToStorage(sync.items);
+      } else {
+        signedInRef.current = false;
+      }
+
+      if (!cancelled) setReady(true);
+    }
+
+    void hydrate();
+
+    const onStorage = () => setLines(readCartFromStorage());
+    window.addEventListener("storage", onStorage);
+    window.addEventListener("rugs-bhadohi-cart-updated", onStorage);
+    return () => {
+      cancelled = true;
+      if (syncTimer.current) clearTimeout(syncTimer.current);
+      window.removeEventListener("storage", onStorage);
+      window.removeEventListener("rugs-bhadohi-cart-updated", onStorage);
+    };
   }, []);
 
   const addItem = useCallback(
@@ -153,6 +192,9 @@ export function CartProvider({ children }: { children: ReactNode }) {
 
   const clearCart = useCallback(() => {
     persist([]);
+    if (signedInRef.current) {
+      void clearMyCart();
+    }
   }, [persist]);
 
   const value = useMemo<CartContextValue>(

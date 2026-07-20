@@ -186,7 +186,7 @@ export function CartClient() {
           </dl>
           <div className="mt-6 flex flex-col gap-3">
             <Link
-              href="/account"
+              href="/checkout"
               className="flex w-full items-center justify-center rounded-lg bg-rc-navy px-4 py-3 text-center text-sm font-semibold text-white transition-colors hover:bg-rc-navy-dark"
             >
               Proceed to checkout

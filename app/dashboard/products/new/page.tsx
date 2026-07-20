@@ -15,7 +15,16 @@ export default async function NewProductPage() {
 
   return (
     <div className="space-y-6">
-      <DashboardPageHeader title="Add product" />
+      <DashboardPageHeader
+        title="Add product"
+        breadcrumbs={[
+          { label: "Dashboard", href: "/dashboard" },
+          { label: "Products", href: "/dashboard/products" },
+          { label: "Add product" },
+        ]}
+        backHref="/dashboard/products"
+        backLabel="Back to products"
+      />
       <ProductForm
         product={product}
         mode="create"

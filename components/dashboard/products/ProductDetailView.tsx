@@ -1,11 +1,8 @@
 import Image from "next/image";
-import Link from "next/link";
 import { StatusBadge } from "@/components/dashboard/StatusBadge";
-import { ProductLifecycleActions } from "@/components/dashboard/products/ProductLifecycleActions";
 import { imageUrl } from "@/lib/api/mappers";
 import type { DashboardProduct } from "@/lib/dashboard/products";
 import { availabilityLabel } from "@/lib/dashboard/product-options";
-import type { ProductApiStatus } from "@/lib/api/products";
 
 import type { ReactNode } from "react";
 
@@ -46,13 +43,6 @@ function formatRupee(value: string) {
 export function ProductDetailView({ product }: ProductDetailViewProps) {
   const totalStock =
     product.variants.reduce((sum, v) => sum + v.stock, 0) || product.quantity;
-  const apiStatus = (
-    product.status === "archived"
-      ? "ARCHIVED"
-      : product.status === "draft"
-        ? "DRAFT"
-        : "PUBLISHED"
-  ) as ProductApiStatus;
 
   return (
     <div className="space-y-6">
@@ -83,27 +73,6 @@ export function ProductDetailView({ product }: ProductDetailViewProps) {
           <p className="mt-2 text-sm text-neutral-600">
             {product.detailedDescription || product.shortDescription}
           </p>
-          <div className="mt-4 flex flex-wrap gap-2">
-            <Link
-              href={`/dashboard/products/${product.id}/edit`}
-              className="rounded-lg bg-rc-navy px-4 py-2 text-sm font-semibold text-white hover:bg-rc-navy-dark"
-            >
-              Edit product
-            </Link>
-            <Link
-              href="/dashboard/products"
-              className="rounded-lg border border-neutral-200 bg-white px-4 py-2 text-sm font-medium text-neutral-700 hover:bg-neutral-50"
-            >
-              Back to list
-            </Link>
-          </div>
-          <div className="mt-3">
-            <ProductLifecycleActions
-              productId={product.id}
-              productName={product.name}
-              apiStatus={apiStatus}
-            />
-          </div>
         </div>
         <div className="text-right text-sm">
           <p className="text-neutral-500">Updated</p>

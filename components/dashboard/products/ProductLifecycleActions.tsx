@@ -1,8 +1,14 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 import { ConfirmDialog } from "@/components/dashboard/ConfirmDialog";
+import {
+  IconArchive,
+  IconDelete,
+  IconDraft,
+  IconPublish,
+} from "@/components/dashboard/dashboard-icons";
 import {
   deleteProductClient,
   setProductStatusClient,
@@ -19,15 +25,15 @@ type ProductLifecycleActionsProps = {
   productId: string;
   productName: string;
   apiStatus: ProductApiStatus;
-  /** Compact links for table rows */
+  /** Compact icon buttons for table rows */
   compact?: boolean;
   onChanged?: () => void | Promise<void>;
 };
 
-const compactBtn =
-  "inline-block rounded-lg border border-neutral-200 bg-white px-3 py-1.5 text-sm font-medium text-neutral-700 transition-colors hover:bg-neutral-50 disabled:opacity-50";
-const compactDanger =
-  "inline-block rounded-lg border border-red-200 bg-white px-3 py-1.5 text-sm font-medium text-red-700 transition-colors hover:bg-red-50 disabled:opacity-50";
+const iconBtn =
+  "inline-flex h-8 w-8 items-center justify-center rounded-lg border border-neutral-200 bg-white text-neutral-700 transition-colors hover:bg-neutral-50 disabled:opacity-50";
+const iconDangerBtn =
+  "inline-flex h-8 w-8 items-center justify-center rounded-lg border border-red-200 bg-white text-red-700 transition-colors hover:bg-red-50 disabled:opacity-50";
 const solidBtn =
   "rounded-lg border border-neutral-200 bg-white px-4 py-2 text-sm font-medium text-neutral-700 hover:bg-neutral-50 disabled:opacity-50";
 const solidDanger =
@@ -38,6 +44,30 @@ function normalizeApiStatus(status: string): ProductApiStatus {
   if (upper === "PUBLISHED" || upper === "OUT_OF_STOCK") return "PUBLISHED";
   if (upper === "ARCHIVED") return "ARCHIVED";
   return "DRAFT";
+}
+
+function IconActionButton({
+  label,
+  className,
+  onClick,
+  children,
+}: {
+  label: string;
+  className: string;
+  onClick: () => void;
+  children: ReactNode;
+}) {
+  return (
+    <button
+      type="button"
+      title={label}
+      aria-label={label}
+      className={className}
+      onClick={onClick}
+    >
+      {children}
+    </button>
+  );
 }
 
 export function ProductLifecycleActions({
@@ -53,8 +83,6 @@ export function ProductLifecycleActions({
   const [error, setError] = useState("");
 
   const current = normalizeApiStatus(apiStatus);
-  const btn = compact ? compactBtn : solidBtn;
-  const dangerBtn = compact ? compactDanger : solidDanger;
 
   async function refresh() {
     if (onChanged) await onChanged();
@@ -113,37 +141,81 @@ export function ProductLifecycleActions({
 
   return (
     <>
-      <div className={`flex flex-wrap gap-2 ${compact ? "" : ""}`}>
+      <div className="flex flex-wrap gap-1.5">
         {current !== "PUBLISHED" ? (
-          <button
-            type="button"
-            className={btn}
-            onClick={() => setDialog({ type: "status", next: "PUBLISHED" })}
-          >
-            Publish
-          </button>
+          compact ? (
+            <IconActionButton
+              label="Publish"
+              className={iconBtn}
+              onClick={() => setDialog({ type: "status", next: "PUBLISHED" })}
+            >
+              <IconPublish />
+            </IconActionButton>
+          ) : (
+            <button
+              type="button"
+              className={solidBtn}
+              onClick={() => setDialog({ type: "status", next: "PUBLISHED" })}
+            >
+              Publish
+            </button>
+          )
         ) : null}
         {current !== "DRAFT" ? (
-          <button
-            type="button"
-            className={btn}
-            onClick={() => setDialog({ type: "status", next: "DRAFT" })}
-          >
-            Draft
-          </button>
+          compact ? (
+            <IconActionButton
+              label="Draft"
+              className={iconBtn}
+              onClick={() => setDialog({ type: "status", next: "DRAFT" })}
+            >
+              <IconDraft />
+            </IconActionButton>
+          ) : (
+            <button
+              type="button"
+              className={solidBtn}
+              onClick={() => setDialog({ type: "status", next: "DRAFT" })}
+            >
+              Draft
+            </button>
+          )
         ) : null}
         {current !== "ARCHIVED" ? (
+          compact ? (
+            <IconActionButton
+              label="Archive"
+              className={iconBtn}
+              onClick={() => setDialog({ type: "status", next: "ARCHIVED" })}
+            >
+              <IconArchive />
+            </IconActionButton>
+          ) : (
+            <button
+              type="button"
+              className={solidBtn}
+              onClick={() => setDialog({ type: "status", next: "ARCHIVED" })}
+            >
+              Archive
+            </button>
+          )
+        ) : null}
+        {compact ? (
+          <IconActionButton
+            label="Delete"
+            className={iconDangerBtn}
+            onClick={() => setDialog({ type: "delete" })}
+          >
+            <IconDelete />
+          </IconActionButton>
+        ) : (
           <button
             type="button"
-            className={btn}
-            onClick={() => setDialog({ type: "status", next: "ARCHIVED" })}
+            className={solidDanger}
+            onClick={() => setDialog({ type: "delete" })}
           >
-            Archive
+            Delete
           </button>
-        ) : null}
-        <button type="button" className={dangerBtn} onClick={() => setDialog({ type: "delete" })}>
-          Delete
-        </button>
+        )}
       </div>
 
       {error ? <p className="mt-2 text-xs text-red-600">{error}</p> : null}

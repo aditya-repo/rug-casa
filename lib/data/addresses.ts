@@ -7,10 +7,13 @@ export type SavedAddress = {
   phone: string;
   line1: string;
   line2: string;
+  landmark: string;
   city: string;
   state: string;
   pincode: string;
   country: string;
+  /** ISO country code when known (e.g. IN). Used for payment gateway routing. */
+  countryCode?: string;
   isDefault: boolean;
 };
 
@@ -18,33 +21,4 @@ export const ADDRESS_LABEL_OPTIONS: { value: AddressLabel; label: string }[] = [
   { value: "home", label: "Home" },
   { value: "work", label: "Work" },
   { value: "other", label: "Other" },
-];
-
-export const defaultAddresses: SavedAddress[] = [
-  {
-    id: "seed-home",
-    label: "home",
-    fullName: "Arjun Sharma",
-    phone: "+91 98765 43210",
-    line1: "42, Palm Grove Apartments",
-    line2: "Near City Mall",
-    city: "Mumbai",
-    state: "Maharashtra",
-    pincode: "400001",
-    country: "India",
-    isDefault: true,
-  },
-  {
-    id: "seed-work",
-    label: "work",
-    fullName: "Arjun Sharma",
-    phone: "+91 98765 43210",
-    line1: "Rugs Bhadohi Studio, 12 Industrial Lane",
-    line2: "Unit 3B",
-    city: "Mumbai",
-    state: "Maharashtra",
-    pincode: "400051",
-    country: "India",
-    isDefault: false,
-  },
 ];

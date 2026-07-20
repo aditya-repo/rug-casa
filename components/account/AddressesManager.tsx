@@ -1,28 +1,42 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState, useTransition } from "react";
+import {
+  AddressLocationFields,
+  type AddressLocationValue,
+} from "@/components/account/AddressLocationFields";
+import {
+  createMyAddress,
+  deleteMyAddress,
+  getMyAddresses,
+  setMyDefaultAddress,
+  updateMyAddress,
+} from "@/lib/auth/address-actions";
 import {
   ADDRESS_LABEL_OPTIONS,
-  defaultAddresses,
   type AddressLabel,
   type SavedAddress,
 } from "@/lib/data/addresses";
 
-const STORAGE_KEY = "rugs-bhadohi-account-addresses";
+type FormState = Omit<SavedAddress, "id" | "isDefault"> & {
+  countryCode: string;
+  stateCode: string;
+};
 
-const emptyForm = (): Omit<SavedAddress, "id" | "isDefault"> => ({
+const emptyForm = (): FormState => ({
   label: "home",
   fullName: "",
   phone: "",
   line1: "",
   line2: "",
+  landmark: "",
   city: "",
   state: "",
+  stateCode: "",
   pincode: "",
   country: "India",
+  countryCode: "IN",
 });
-
-type FormState = Omit<SavedAddress, "id" | "isDefault">;
 
 const inputClass =
   "mt-1 w-full rounded-lg border border-neutral-300 bg-white px-3 py-2 text-sm text-neutral-900 shadow-sm outline-none transition-colors focus:border-rc-accent focus:ring-1 focus:ring-rc-accent";
@@ -30,61 +44,42 @@ const inputClass =
 const labelClass =
   "text-xs font-medium uppercase tracking-wide text-rc-muted md:text-neutral-500";
 
-function ensureOneDefault(list: SavedAddress[]): SavedAddress[] {
-  if (list.length === 0) return list;
-  if (!list.some((a) => a.isDefault)) {
-    return list.map((a, i) => ({ ...a, isDefault: i === 0 }));
-  }
-  const firstDefault = list.findIndex((a) => a.isDefault);
-  return list.map((a, i) => ({ ...a, isDefault: i === firstDefault }));
-}
-
-function parseStored(raw: string | null): SavedAddress[] | null {
-  if (raw == null || raw === "") return null;
-  try {
-    const parsed = JSON.parse(raw) as unknown;
-    if (!Array.isArray(parsed)) return null;
-    if (parsed.length === 0) return [];
-    const first = parsed[0] as Record<string, unknown>;
-    if (
-      typeof first.id === "string" &&
-      typeof first.fullName === "string" &&
-      typeof first.line1 === "string"
-    ) {
-      return parsed as SavedAddress[];
-    }
-  } catch {
-    /* ignore */
-  }
-  return null;
-}
-
 export function AddressesManager() {
-  const [addresses, setAddresses] = useState<SavedAddress[]>(defaultAddresses);
+  const [addresses, setAddresses] = useState<SavedAddress[]>([]);
   const [hydrated, setHydrated] = useState(false);
   const [mode, setMode] = useState<"idle" | "add" | "edit">("idle");
   const [editingId, setEditingId] = useState<string | null>(null);
   const [form, setForm] = useState<FormState>(emptyForm());
+  const [error, setError] = useState("");
+  const [pending, startTransition] = useTransition();
 
-  useEffect(() => {
-    const raw =
-      typeof window !== "undefined" ? localStorage.getItem(STORAGE_KEY) : null;
-    const stored = parseStored(raw);
-    if (stored !== null) {
-      setAddresses(stored.length === 0 ? [] : ensureOneDefault(stored));
-    }
-    setHydrated(true);
+  const reload = useCallback(async () => {
+    const list = await getMyAddresses();
+    setAddresses(list);
   }, []);
 
   useEffect(() => {
-    if (!hydrated || typeof window === "undefined") return;
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(addresses));
-  }, [addresses, hydrated]);
+    let cancelled = false;
+    (async () => {
+      try {
+        const list = await getMyAddresses();
+        if (!cancelled) setAddresses(list);
+      } catch {
+        if (!cancelled) setError("Could not load addresses.");
+      } finally {
+        if (!cancelled) setHydrated(true);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const openAdd = useCallback(() => {
     setForm(emptyForm());
     setEditingId(null);
     setMode("add");
+    setError("");
   }, []);
 
   const openEdit = useCallback((addr: SavedAddress) => {
@@ -94,13 +89,17 @@ export function AddressesManager() {
       phone: addr.phone,
       line1: addr.line1,
       line2: addr.line2,
+      landmark: addr.landmark ?? "",
       city: addr.city,
       state: addr.state,
+      stateCode: "",
       pincode: addr.pincode,
       country: addr.country,
+      countryCode: addr.countryCode ?? "",
     });
     setEditingId(addr.id);
     setMode("edit");
+    setError("");
   }, []);
 
   const closeForm = useCallback(() => {
@@ -109,17 +108,29 @@ export function AddressesManager() {
     setForm(emptyForm());
   }, []);
 
+  const setLocation = useCallback((next: AddressLocationValue) => {
+    setForm((f) => ({
+      ...f,
+      country: next.country,
+      countryCode: next.countryCode,
+      state: next.state,
+      stateCode: next.stateCode,
+      city: next.city,
+    }));
+  }, []);
+
   const saveForm = useCallback(() => {
     const trimmed: FormState = {
       ...form,
-      fullName: form.fullName.trim(),
-      phone: form.phone.trim(),
-      line1: form.line1.trim(),
-      line2: form.line2.trim(),
-      city: form.city.trim(),
-      state: form.state.trim(),
-      pincode: form.pincode.trim(),
-      country: form.country.trim() || "India",
+      fullName: (form.fullName ?? "").trim(),
+      phone: (form.phone ?? "").trim(),
+      line1: (form.line1 ?? "").trim(),
+      line2: (form.line2 ?? "").trim(),
+      landmark: (form.landmark ?? "").trim(),
+      city: (form.city ?? "").trim(),
+      state: (form.state ?? "").trim(),
+      pincode: (form.pincode ?? "").trim(),
+      country: (form.country ?? "").trim() || "India",
     };
     if (
       !trimmed.fullName ||
@@ -127,41 +138,72 @@ export function AddressesManager() {
       !trimmed.line1 ||
       !trimmed.city ||
       !trimmed.state ||
+      !trimmed.country ||
       !trimmed.pincode
     ) {
       return;
     }
 
-    if (mode === "add") {
-      const id = `addr-${Date.now()}`;
-      const isFirst = addresses.length === 0;
-      const newAddr: SavedAddress = {
-        id,
-        ...trimmed,
-        isDefault: isFirst,
-      };
-      setAddresses((prev) => [...prev, newAddr]);
-    } else if (mode === "edit" && editingId) {
-      setAddresses((prev) =>
-        prev.map((a) =>
-          a.id === editingId ? { ...a, ...trimmed, id: a.id, isDefault: a.isDefault } : a,
-        ),
-      );
-    }
-    closeForm();
-  }, [addresses.length, closeForm, editingId, form, mode]);
+    const payload = {
+      label: trimmed.label,
+      fullName: trimmed.fullName,
+      phone: trimmed.phone,
+      line1: trimmed.line1,
+      line2: trimmed.line2 || null,
+      landmark: trimmed.landmark || null,
+      city: trimmed.city,
+      state: trimmed.state,
+      postalCode: trimmed.pincode,
+      country: trimmed.country,
+      countryCode: (form.countryCode ?? "").trim().toUpperCase() || null,
+    };
 
-  const removeAddress = useCallback((id: string) => {
-    setAddresses((prev) => {
-      const next = prev.filter((a) => a.id !== id);
-      return ensureOneDefault(next);
+    setError("");
+    startTransition(async () => {
+      const result =
+        mode === "edit" && editingId
+          ? await updateMyAddress(editingId, payload)
+          : await createMyAddress({
+              ...payload,
+              isDefault: addresses.length === 0,
+            });
+
+      if (!result.ok) {
+        setError(result.error);
+        return;
+      }
+      await reload();
+      closeForm();
     });
-  }, []);
+  }, [addresses.length, closeForm, editingId, form, mode, reload]);
+
+  const removeAddress = useCallback(
+    (id: string) => {
+      setError("");
+      startTransition(async () => {
+        const result = await deleteMyAddress(id);
+        if (!result.ok) {
+          setError(result.error);
+          return;
+        }
+        setAddresses(result.addresses);
+      });
+    },
+    [],
+  );
 
   const setDefault = useCallback((id: string) => {
-    setAddresses((prev) =>
-      prev.map((a) => ({ ...a, isDefault: a.id === id })),
-    );
+    setError("");
+    startTransition(async () => {
+      const result = await setMyDefaultAddress(id);
+      if (!result.ok) {
+        setError(result.error);
+        return;
+      }
+      setAddresses((prev) =>
+        prev.map((a) => ({ ...a, isDefault: a.id === id })),
+      );
+    });
   }, []);
 
   const formValid = useMemo(() => {
@@ -171,12 +213,21 @@ export function AddressesManager() {
       line1: form.line1.trim(),
       city: form.city.trim(),
       state: form.state.trim(),
+      country: form.country.trim(),
       pincode: form.pincode.trim(),
     };
     return Object.values(t).every(Boolean);
   }, [form]);
 
   const showForm = mode !== "idle";
+
+  if (!hydrated) {
+    return (
+      <div className="rounded-lg border border-rc-border bg-white px-6 py-10 text-center text-sm text-rc-muted">
+        Loading addresses…
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -185,7 +236,7 @@ export function AddressesManager() {
           {addresses.length > 0 ? (
             <p className="text-sm text-rc-muted md:text-neutral-500">
               {addresses.length}{" "}
-              {addresses.length === 1 ? "address" : "addresses"} saved on this device.
+              {addresses.length === 1 ? "address" : "addresses"} saved to your account.
             </p>
           ) : (
             <p className="text-sm text-rc-muted md:text-neutral-500">
@@ -196,12 +247,19 @@ export function AddressesManager() {
             <button
               type="button"
               onClick={openAdd}
-              className="rounded-lg bg-rc-navy px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-rc-navy-dark"
+              disabled={pending}
+              className="rounded-lg bg-rc-navy px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-rc-navy-dark disabled:opacity-60"
             >
               Add address
             </button>
           ) : null}
         </div>
+      ) : null}
+
+      {error ? (
+        <p className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+          {error}
+        </p>
       ) : null}
 
       {showForm ? (
@@ -258,9 +316,10 @@ export function AddressesManager() {
               <label htmlFor="addr-line1" className={labelClass}>
                 Address line 1
               </label>
-              <input
+              <textarea
                 id="addr-line1"
-                value={form.line1}
+                rows={3}
+                value={form.line1 ?? ""}
                 onChange={(e) => setForm((f) => ({ ...f, line1: e.target.value }))}
                 className={inputClass}
                 autoComplete="address-line1"
@@ -271,38 +330,40 @@ export function AddressesManager() {
                 Address line 2{" "}
                 <span className="font-normal normal-case text-neutral-400">(optional)</span>
               </label>
-              <input
+              <textarea
                 id="addr-line2"
-                value={form.line2}
+                rows={2}
+                value={form.line2 ?? ""}
                 onChange={(e) => setForm((f) => ({ ...f, line2: e.target.value }))}
                 className={inputClass}
                 autoComplete="address-line2"
               />
             </div>
-            <div>
-              <label htmlFor="addr-city" className={labelClass}>
-                City
+            <div className="sm:col-span-2">
+              <label htmlFor="addr-landmark" className={labelClass}>
+                Landmark{" "}
+                <span className="font-normal normal-case text-neutral-400">(optional)</span>
               </label>
               <input
-                id="addr-city"
-                value={form.city}
-                onChange={(e) => setForm((f) => ({ ...f, city: e.target.value }))}
+                id="addr-landmark"
+                value={form.landmark ?? ""}
+                onChange={(e) => setForm((f) => ({ ...f, landmark: e.target.value }))}
                 className={inputClass}
-                autoComplete="address-level2"
+                placeholder="e.g. Near City Mall, opposite metro gate"
               />
             </div>
-            <div>
-              <label htmlFor="addr-state" className={labelClass}>
-                State
-              </label>
-              <input
-                id="addr-state"
-                value={form.state}
-                onChange={(e) => setForm((f) => ({ ...f, state: e.target.value }))}
-                className={inputClass}
-                autoComplete="address-level1"
-              />
-            </div>
+
+            <AddressLocationFields
+              value={{
+                country: form.country,
+                countryCode: form.countryCode,
+                state: form.state,
+                stateCode: form.stateCode,
+                city: form.city,
+              }}
+              onChange={setLocation}
+            />
+
             <div>
               <label htmlFor="addr-pin" className={labelClass}>
                 PIN code
@@ -315,31 +376,20 @@ export function AddressesManager() {
                 autoComplete="postal-code"
               />
             </div>
-            <div>
-              <label htmlFor="addr-country" className={labelClass}>
-                Country
-              </label>
-              <input
-                id="addr-country"
-                value={form.country}
-                onChange={(e) => setForm((f) => ({ ...f, country: e.target.value }))}
-                className={inputClass}
-                autoComplete="country-name"
-              />
-            </div>
           </div>
           <div className="mt-5 flex flex-wrap gap-2">
             <button
               type="button"
               onClick={saveForm}
-              disabled={!formValid}
+              disabled={!formValid || pending}
               className="rounded-lg bg-rc-navy px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-rc-navy-dark disabled:cursor-not-allowed disabled:opacity-50"
             >
-              Save address
+              {pending ? "Saving…" : "Save address"}
             </button>
             <button
               type="button"
               onClick={closeForm}
+              disabled={pending}
               className="rounded-lg border border-neutral-200 bg-white px-4 py-2 text-sm font-medium text-neutral-700 transition-colors hover:bg-neutral-50"
             >
               Cancel
@@ -399,6 +449,12 @@ export function AddressesManager() {
                         {addr.line2}
                       </>
                     ) : null}
+                    {addr.landmark ? (
+                      <>
+                        <br />
+                        Landmark: {addr.landmark}
+                      </>
+                    ) : null}
                     <br />
                     {addr.city}, {addr.state} {addr.pincode}
                     <br />
@@ -410,7 +466,8 @@ export function AddressesManager() {
                     <button
                       type="button"
                       onClick={() => setDefault(addr.id)}
-                      className="rounded-lg border border-neutral-200 px-3 py-1.5 text-xs font-semibold text-rc-navy transition-colors hover:bg-neutral-50 md:text-sm"
+                      disabled={pending || showForm}
+                      className="rounded-lg border border-neutral-200 px-3 py-1.5 text-xs font-semibold text-rc-navy transition-colors hover:bg-neutral-50 disabled:opacity-50 md:text-sm"
                     >
                       Set default
                     </button>
@@ -418,7 +475,7 @@ export function AddressesManager() {
                   <button
                     type="button"
                     onClick={() => openEdit(addr)}
-                    disabled={showForm}
+                    disabled={showForm || pending}
                     className="rounded-lg border border-neutral-200 px-3 py-1.5 text-xs font-semibold text-rc-accent transition-colors hover:bg-neutral-50 disabled:cursor-not-allowed disabled:opacity-50 md:text-sm"
                   >
                     Edit
@@ -432,7 +489,7 @@ export function AddressesManager() {
                           : "Remove this address?";
                       if (window.confirm(msg)) removeAddress(addr.id);
                     }}
-                    disabled={showForm}
+                    disabled={showForm || pending}
                     className="rounded-lg border border-red-100 px-3 py-1.5 text-xs font-semibold text-red-600 transition-colors hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-40 md:text-sm"
                   >
                     Remove
@@ -443,11 +500,6 @@ export function AddressesManager() {
           );
         })}
       </ul>
-
-      <p className="text-xs text-neutral-500">
-        Addresses are stored in your browser for this demo. Connect to your account API
-        to sync across devices.
-      </p>
     </div>
   );
 }

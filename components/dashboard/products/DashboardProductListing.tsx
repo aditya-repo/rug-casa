@@ -12,6 +12,10 @@ import {
   type ProductApiStatus,
   type ProductListRow,
 } from "@/lib/api/products";
+import {
+  IconEdit,
+  IconView,
+} from "@/components/dashboard/dashboard-icons";
 import { ProductLifecycleActions } from "@/components/dashboard/products/ProductLifecycleActions";
 import {
   PRODUCT_MATERIALS,
@@ -35,8 +39,8 @@ const STATUS_FILTERS: Array<{ label: string; value: ProductApiStatus | "ALL" }> 
 
 const ATTRIBUTE_FILTERS_VISIBLE = 4;
 
-const actionLinkClass =
-  "inline-block rounded-lg border border-neutral-200 bg-white px-3 py-1.5 text-sm font-medium text-neutral-700 transition-colors hover:bg-neutral-50";
+const actionIconClass =
+  "inline-flex h-8 w-8 items-center justify-center rounded-lg border border-neutral-200 bg-white text-neutral-700 transition-colors hover:bg-neutral-50";
 
 function mergeFilterOptions(base: readonly string[], values: string[]) {
   return [...new Set([...base, ...values.filter((v) => v && v !== "—")])].sort((a, b) =>
@@ -209,6 +213,12 @@ export function DashboardProductListing({
           bordered={false}
           title="Product management"
           description="Search and filter products by status, category, and product type."
+          breadcrumbs={[
+            { label: "Dashboard", href: "/dashboard" },
+            { label: "Products" },
+          ]}
+          backHref="/dashboard"
+          backLabel="Back"
           actions={
             <Link
               href="/dashboard/products/new"
@@ -398,18 +408,23 @@ export function DashboardProductListing({
                   </td>
                   <td className="whitespace-nowrap px-4 py-3 text-neutral-500">{product.updatedAt}</td>
                   <td className="px-4 py-3">
-                    <div className="flex flex-col gap-2">
-                      <div className="flex gap-2">
-                        <Link href={`/dashboard/products/${product.id}`} className={actionLinkClass}>
-                          View
-                        </Link>
-                        <Link
-                          href={`/dashboard/products/${product.id}/edit`}
-                          className={actionLinkClass}
-                        >
-                          Edit
-                        </Link>
-                      </div>
+                    <div className="flex flex-wrap items-center gap-1.5">
+                      <Link
+                        href={`/dashboard/products/${product.id}`}
+                        className={actionIconClass}
+                        title="View"
+                        aria-label="View"
+                      >
+                        <IconView />
+                      </Link>
+                      <Link
+                        href={`/dashboard/products/${product.id}/edit`}
+                        className={actionIconClass}
+                        title="Edit"
+                        aria-label="Edit"
+                      >
+                        <IconEdit />
+                      </Link>
                       <ProductLifecycleActions
                         compact
                         productId={product.id}
