@@ -1,5 +1,9 @@
 import { publicApi } from "./fetch";
-import { imageUrl } from "./mappers";
+import {
+  pickPrimaryVariant,
+  resolveProductImageSrc,
+  imageUrl,
+} from "./mappers";
 import type { ArtistCollectionItem } from "@/lib/data/artist-collection";
 
 type ApiArtistProduct = {
@@ -12,6 +16,7 @@ type ApiArtistProduct = {
   variants?: Array<{
     price: number | string;
     salePrice?: number | string | null;
+    thumbnail?: string | null;
     attributes?: Record<string, string> | null;
   }>;
 };
@@ -31,16 +36,12 @@ function formatInrAmount(amount: number | string | null | undefined): string {
   return Math.round(n).toLocaleString("en-IN");
 }
 
-function attrsOf(product: ApiArtistProduct): Record<string, string> {
-  return (product.variants?.[0]?.attributes ?? {}) as Record<string, string>;
-}
-
 export function mapProductToArtistItem(
   product: ApiArtistProduct,
   collectionImageByTitle: Map<string, string>,
 ): ArtistCollectionItem {
-  const variant = product.variants?.[0];
-  const attrs = attrsOf(product);
+  const variant = pickPrimaryVariant(product.variants ?? []);
+  const attrs = (variant?.attributes ?? {}) as Record<string, string>;
   const featured = product.images?.find((i) => i.isFeatured) ?? product.images?.[0];
   const price = variant?.salePrice ?? variant?.price ?? 0;
 
@@ -57,7 +58,8 @@ export function mapProductToArtistItem(
     material: attrs.material?.trim() || "hand knotted - wool and bamboo silk",
     dimensions: attrs.size?.trim() || "",
     price: formatInrAmount(price),
-    imageSrc: imageUrl(featured?.path) || imageUrl(fallbackImage),
+    imageSrc:
+      resolveProductImageSrc(product.variants, product.images) || imageUrl(fallbackImage),
     imageAlt: featured?.alt?.trim() || product.shortDescription?.trim() || collectionTitle,
   };
 }

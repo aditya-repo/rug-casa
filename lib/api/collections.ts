@@ -72,8 +72,19 @@ export async function fetchCollectionsClient(params?: {
 }
 
 export async function fetchActiveCollections() {
-  const res = await serverApi<ApiCollection[]>("/collections/active");
-  return res.data ?? [];
+  try {
+    const res = await serverApi<ApiCollection[]>("/collections/active");
+    return res.data ?? [];
+  } catch (err) {
+    if (
+      err instanceof Error &&
+      (err.message === "fetch failed" ||
+        (err as Error & { cause?: { code?: string } }).cause?.code === "ECONNREFUSED")
+    ) {
+      return [];
+    }
+    throw err;
+  }
 }
 
 export async function fetchActiveCollectionsClient() {

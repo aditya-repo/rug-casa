@@ -1,12 +1,18 @@
 "use client";
 
 import Image from "next/image";
+import Link from "next/link";
 import { useRef, useState, type ChangeEvent, type ReactNode } from "react";
-import type { ProductVariant } from "@/lib/dashboard/products";
 import {
-  PRODUCT_COLORS,
-  PRODUCT_SIZES,
-} from "@/lib/dashboard/product-options";
+  ColorMultiSearchSelect,
+  ColorSearchSelect,
+  type ColorOption,
+} from "@/components/dashboard/products/ColorSearchSelect";
+import {
+  composeSizeLabel,
+  type ProductVariant,
+} from "@/lib/dashboard/products";
+import { formatCsvOptions, parseCsvOptions } from "@/components/dashboard/products/CheckboxMultiSelect";
 import { imageUrl } from "@/lib/api/mappers";
 import { uploadMediaClient } from "@/lib/api/media";
 
@@ -15,6 +21,19 @@ const inputClass =
 
 const labelClass = "text-xs font-semibold uppercase tracking-wide text-neutral-500";
 
+function ColourGalleryLink() {
+  return (
+    <Link
+      href="/dashboard/colors"
+      target="_blank"
+      rel="noopener noreferrer"
+      className="font-medium text-rc-accent hover:underline"
+    >
+      Colour gallery
+    </Link>
+  );
+}
+
 function VariantField({
   label,
   hint,
@@ -22,58 +41,25 @@ function VariantField({
   className = "",
 }: {
   label: string;
-  hint?: string;
+  hint?: ReactNode;
   children: ReactNode;
   className?: string;
 }) {
   return (
-    <label className={`block ${className}`}>
+    <div className={`block ${className}`}>
       <span className={labelClass}>{label}</span>
       <span className="mt-0.5 block min-h-[16px] text-[11px] font-normal normal-case text-neutral-400">
         {hint ?? "\u00A0"}
       </span>
       {children}
-    </label>
-  );
-}
-
-function VariantCombobox({
-  listId,
-  value,
-  options,
-  placeholder,
-  onChange,
-  required,
-}: {
-  listId: string;
-  value: string;
-  options: readonly string[];
-  placeholder?: string;
-  onChange: (value: string) => void;
-  required?: boolean;
-}) {
-  return (
-    <>
-      <input
-        list={listId}
-        required={required}
-        placeholder={placeholder}
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        className={inputClass}
-      />
-      <datalist id={listId}>
-        {options.map((option) => (
-          <option key={option} value={option} />
-        ))}
-      </datalist>
-    </>
+    </div>
   );
 }
 
 type ProductVariantFieldsProps = {
   variant: ProductVariant;
   index: number;
+  colorOptions: ColorOption[];
   onChange: (patch: Partial<ProductVariant>) => void;
   onSetPrimary: () => void;
   onRemove: () => void;
@@ -83,6 +69,7 @@ type ProductVariantFieldsProps = {
 export function ProductVariantFields({
   variant,
   index,
+  colorOptions,
   onChange,
   onSetPrimary,
   onRemove,
@@ -91,7 +78,10 @@ export function ProductVariantFields({
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
   const [uploadError, setUploadError] = useState("");
-  const fieldId = (key: string) => `variant-${variant.id}-${key}`;
+
+  const sizeLabel =
+    composeSizeLabel(variant.length, variant.width) || variant.size;
+  const otherColors = parseCsvOptions(variant.otherColors);
 
   const handleImageUpload = async (e: ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files ?? []);
@@ -119,9 +109,29 @@ export function ProductVariantFields({
     onChange({ images: variant.images.filter((_, i) => i !== imageIndex) });
   };
 
+  const updateDimensions = (patch: { length?: string; width?: string }) => {
+    const length = patch.length ?? variant.length;
+    const width = patch.width ?? variant.width;
+    onChange({
+      length,
+      width,
+      size: composeSizeLabel(length, width),
+    });
+  };
+
+  const setPrimaryColor = (color: string) => {
+    const nextOther = otherColors.filter(
+      (name) => name.toLowerCase() !== color.trim().toLowerCase(),
+    );
+    onChange({
+      color,
+      otherColors: formatCsvOptions(nextOther),
+    });
+  };
+
   const variantTitle =
-    variant.size || variant.sku
-      ? [variant.size, variant.sku].filter(Boolean).join(" · ")
+    sizeLabel || variant.sku
+      ? [sizeLabel, variant.sku].filter(Boolean).join(" · ")
       : `Variant ${index + 1}`;
 
   return (
@@ -158,29 +168,72 @@ export function ProductVariantFields({
         ) : null}
       </div>
 
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
-        <VariantField label="Size" hint="Select or type custom">
-          <VariantCombobox
-            listId={fieldId("size")}
-            value={variant.size}
-            options={PRODUCT_SIZES}
-            placeholder="e.g. 5x7"
-            onChange={(size) => onChange({ size })}
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 lg:grid-cols-12">
+        <VariantField label="Length" hint="Feet (e.g. 5)" className="lg:col-span-1">
+          <input
+            required
+            type="number"
+            min={0}
+            step="0.1"
+            inputMode="decimal"
+            placeholder="5"
+            value={variant.length}
+            onChange={(e) => updateDimensions({ length: e.target.value })}
+            className={inputClass}
+          />
+        </VariantField>
+
+        <VariantField label="Width" hint="Feet (e.g. 7)" className="lg:col-span-1">
+          <input
+            required
+            type="number"
+            min={0}
+            step="0.1"
+            inputMode="decimal"
+            placeholder="7"
+            value={variant.width}
+            onChange={(e) => updateDimensions({ width: e.target.value })}
+            className={inputClass}
+          />
+        </VariantField>
+
+        <VariantField
+          label="Primary colour"
+          hint={
+            <>
+              Search & select one · <ColourGalleryLink />
+            </>
+          }
+          className="sm:col-span-2 lg:col-span-2"
+        >
+          <ColorSearchSelect
+            options={colorOptions}
+            value={variant.color}
+            onChange={setPrimaryColor}
+            placeholder="Search primary colour…"
             required
           />
         </VariantField>
 
-        <VariantField label="Color" hint="Select or type custom">
-          <VariantCombobox
-            listId={fieldId("color")}
-            value={variant.color}
-            options={PRODUCT_COLORS}
-            placeholder="e.g. Beige"
-            onChange={(color) => onChange({ color })}
+        <VariantField
+          label="Other colours"
+          hint={
+            <>
+              Optional multi-select · <ColourGalleryLink />
+            </>
+          }
+          className="sm:col-span-2 lg:col-span-2"
+        >
+          <ColorMultiSearchSelect
+            options={colorOptions}
+            value={otherColors}
+            exclude={variant.color ? [variant.color] : []}
+            onChange={(names) => onChange({ otherColors: formatCsvOptions(names) })}
+            placeholder="Search & select other colours…"
           />
         </VariantField>
 
-        <VariantField label="Price" hint="Base price in ₹">
+        <VariantField label="Price" hint="Base price in ₹" className="lg:col-span-2">
           <input
             required
             type="number"
@@ -193,7 +246,7 @@ export function ProductVariantFields({
           />
         </VariantField>
 
-        <VariantField label="Sale price" hint="Optional discount price">
+        <VariantField label="Sale price" hint="Optional discount price" className="lg:col-span-2">
           <input
             type="number"
             min={0}
@@ -205,7 +258,7 @@ export function ProductVariantFields({
           />
         </VariantField>
 
-        <VariantField label="SKU" hint="Unique variant code">
+        <VariantField label="SKU" hint="Unique variant code" className="lg:col-span-2">
           <input
             required
             placeholder="HR001"
@@ -215,7 +268,7 @@ export function ProductVariantFields({
           />
         </VariantField>
 
-        <VariantField label="Images" hint="Upload one or more" className="sm:col-span-2 lg:col-span-1">
+        <VariantField label="Images" hint="Upload one or more" className="sm:col-span-2 lg:col-span-4">
           <div className="mt-1 flex min-h-[42px] flex-wrap items-center gap-2">
             <input
               ref={fileInputRef}
@@ -243,7 +296,7 @@ export function ProductVariantFields({
                 >
                   <Image
                     src={displaySrc}
-                    alt={variant.size || `Variant image ${imageIndex + 1}`}
+                    alt={sizeLabel || `Variant image ${imageIndex + 1}`}
                     fill
                     className="object-cover"
                     sizes="40px"
@@ -264,6 +317,12 @@ export function ProductVariantFields({
           {uploadError ? <p className="mt-1 text-xs text-red-600">{uploadError}</p> : null}
         </VariantField>
       </div>
+
+      {sizeLabel ? (
+        <p className="mt-3 text-xs text-neutral-500">
+          Size label: <span className="font-medium text-neutral-800">{sizeLabel} ft</span>
+        </p>
+      ) : null}
     </div>
   );
 }

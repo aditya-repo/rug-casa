@@ -1,14 +1,16 @@
 import { DashboardPageHeader } from "@/components/dashboard/DashboardPageHeader";
 import { ProductForm } from "@/components/dashboard/products/ProductForm";
 import { fetchCategories } from "@/lib/api/categories";
+import { fetchActiveColors } from "@/lib/api/colors";
 import { fetchActiveCollections } from "@/lib/api/collections";
 import { createEmptyProduct } from "@/lib/dashboard/products";
 
 export default async function NewProductPage() {
   const product = createEmptyProduct();
-  const [{ items: categories }, collections] = await Promise.all([
+  const [{ items: categories }, collections, colors] = await Promise.all([
     fetchCategories(),
     fetchActiveCollections(),
+    fetchActiveColors(),
   ]);
 
   return (
@@ -19,6 +21,7 @@ export default async function NewProductPage() {
         mode="create"
         categories={categories}
         collections={collections}
+        colors={colors}
       />
     </div>
   );

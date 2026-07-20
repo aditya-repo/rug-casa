@@ -1,5 +1,8 @@
 import { publicApi } from "./fetch";
-import { imageUrl } from "./mappers";
+import {
+  pickPrimaryVariant,
+  resolveProductImageSrc,
+} from "./mappers";
 import type { ProductItem } from "@/lib/data/products";
 
 export type ShopProductItem = ProductItem & {
@@ -29,6 +32,7 @@ export type ApiPublicProduct = {
   variants?: Array<{
     price: number | string;
     salePrice?: number | string | null;
+    thumbnail?: string | null;
     attributes?: Record<string, string> | null;
   }>;
   _count?: { reviews: number };
@@ -84,13 +88,14 @@ function pickTag(product: ApiPublicProduct): string | undefined {
 }
 
 export function mapPublicProduct(product: ApiPublicProduct): ShopProductItem {
-  const variant = product.variants?.[0];
+  const variant = pickPrimaryVariant(product.variants ?? []);
   const attrs = (variant?.attributes ?? {}) as Record<string, string>;
   const featured = product.images?.find((i) => i.isFeatured) ?? product.images?.[0];
   const sale = toNumber(variant?.salePrice ?? variant?.price);
   const mrp = toNumber(variant?.price ?? sale);
   const discountPercent =
     mrp > sale && mrp > 0 ? Math.round(((mrp - sale) / mrp) * 100) : 0;
+  const imageSrc = resolveProductImageSrc(product.variants, product.images);
 
   return {
     id: product.id,
@@ -104,7 +109,7 @@ export function mapPublicProduct(product: ApiPublicProduct): ShopProductItem {
     rating: 0,
     reviews: product._count?.reviews ?? 0,
     tag: pickTag(product),
-    imageSrc: imageUrl(featured?.path),
+    imageSrc,
     imageAlt: featured?.alt?.trim() || product.shortDescription?.trim() || product.title,
     categorySlug: product.category?.slug ?? "",
     collectionTitles: parseCollectionTitles(product.collection),

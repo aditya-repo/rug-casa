@@ -1,5 +1,10 @@
 import { API_ORIGIN } from "./config";
-import type { DashboardProduct, ProductVariant } from "@/lib/dashboard/products";
+import {
+  composeSizeLabel,
+  parseSizeParts,
+  type DashboardProduct,
+  type ProductVariant,
+} from "@/lib/dashboard/products";
 import type { ProductListRow } from "./products";
 
 export function formatCurrency(amount: number | string | null | undefined): string {
@@ -194,20 +199,27 @@ function serializeDesignPayload(input: {
 
 function attrs(v: ApiVariant | undefined, productOrigin?: string | null) {
   const a = v?.attributes ?? {};
+  const size = a.size ?? "";
+  const parsed = parseSizeParts(size);
+  const length = a.length?.trim() || parsed.length;
+  const width = a.width?.trim() || parsed.width;
   return {
     shape: a.shape ?? "Rectangle",
-    material: a.material ?? "Wool",
+    material: a.material ?? "Indian Wool",
     color: a.color ?? "Beige",
-    size: a.size ?? "",
+    otherColors: a.otherColors ?? "",
+    size,
+    length,
+    width,
     weavingType: a.technique ?? a.weavingType ?? "Hand-knotted",
     patternArt: a.style ?? a.patternArt ?? a.pattern ?? "Geometric",
-    thickness: a.thickness ?? "Medium pile",
+    thickness: a.thickness ?? "Medium",
     origin: a.origin ?? productOrigin ?? "India",
     isPrimary: a.isPrimary === "true" || a.isPrimary === "1",
   };
 }
 
-function pickPrimaryVariant<T extends { attributes?: Record<string, string> | null }>(
+export function pickPrimaryVariant<T extends { attributes?: Record<string, string> | null }>(
   variants: T[],
 ): T | undefined {
   return (
@@ -216,7 +228,7 @@ function pickPrimaryVariant<T extends { attributes?: Record<string, string> | nu
   );
 }
 
-function parseVariantImages(
+export function parseVariantImages(
   thumbnail: string | null | undefined,
   attributes: Record<string, string> | null | undefined,
 ): string[] {
@@ -238,6 +250,20 @@ function parseVariantImages(
   return thumbnail ? [thumbnail] : [];
 }
 
+/** Prefer primary-variant images; fall back to product gallery paths. */
+export function resolveProductImageSrc(
+  variants: Array<{
+    thumbnail?: string | null;
+    attributes?: Record<string, string> | null;
+  }> | undefined,
+  images?: Array<{ path: string; isFeatured?: boolean }> | null,
+): string {
+  const primary = pickPrimaryVariant(variants ?? []);
+  const fromVariant = parseVariantImages(primary?.thumbnail, primary?.attributes);
+  const featured = images?.find((i) => i.isFeatured) ?? images?.[0];
+  return imageUrl(fromVariant[0] ?? featured?.path);
+}
+
 export function mapProductToListItem(p: ApiProduct): ProductListRow {
   const variants = p.variants ?? [];
   const variant = pickPrimaryVariant(variants);
@@ -245,6 +271,7 @@ export function mapProductToListItem(p: ApiProduct): ProductListRow {
   const stock = variants.reduce((s, v) => s + v.stock, 0);
   const price = variant?.salePrice ?? variant?.price ?? 0;
   const featuredImage = p.images?.find((i) => i.isFeatured) ?? p.images?.[0];
+  const primaryImages = parseVariantImages(variant?.thumbnail, variant?.attributes);
   const uiStatus = mapStatusToUi(p.status);
   const apiStatus = p.status.toUpperCase() as ProductListRow["apiStatus"];
 
@@ -253,7 +280,7 @@ export function mapProductToListItem(p: ApiProduct): ProductListRow {
     name: p.title,
     slug: p.slug,
     sku: variant?.sku ?? p.skuPrefix ?? "—",
-    imageSrc: imageUrl(featuredImage?.path ?? variant?.thumbnail),
+    imageSrc: imageUrl(primaryImages[0] ?? featuredImage?.path),
     imageAlt: featuredImage?.alt ?? p.title,
     price: formatCurrency(price),
     stock,
@@ -280,6 +307,7 @@ export function mapProductToDetail(p: ApiProduct): DashboardProduct {
   const featuredImage = p.images?.find((i) => i.isFeatured) ?? p.images?.[0];
   const stock = apiVariants.reduce((s, v) => s + v.stock, 0);
   const primaryAttrs = attrs(variant, p.origin);
+  const primaryImages = parseVariantImages(variant?.thumbnail, variant?.attributes);
   const hasExplicitPrimary = apiVariants.some(
     (v) => v.attributes?.isPrimary === "true" || v.attributes?.isPrimary === "1",
   );
@@ -289,9 +317,12 @@ export function mapProductToDetail(p: ApiProduct): DashboardProduct {
     return {
       id: v.id,
       shape: va.shape,
-      size: va.size,
+      size: va.size || composeSizeLabel(va.length, va.width),
+      length: va.length,
+      width: va.width,
       material: va.material,
       color: va.color,
+      otherColors: va.otherColors,
       weavingType: va.weavingType,
       patternArt: va.patternArt,
       thickness: va.thickness,
@@ -315,7 +346,7 @@ export function mapProductToDetail(p: ApiProduct): DashboardProduct {
     shortDescription: p.shortDescription ?? "",
     detailedDescription: p.description ?? "",
     seoDescription: p.seo?.seoDescription ?? "",
-    imageSrc: imageUrl(featuredImage?.path ?? variant?.thumbnail),
+    imageSrc: imageUrl(primaryImages[0] ?? featuredImage?.path),
     imageAlt: featuredImage?.alt ?? p.title,
     collection: p.collection ?? "",
     categoryId: p.categoryId ?? p.category?.id ?? "",
@@ -363,16 +394,22 @@ export function mapProductFormToApi(form: DashboardProduct) {
   const variants = ordered.map((v, i) => {
     const isPrimary = hasPrimary ? v.isPrimary : i === 0;
     const imagePaths = v.images.map((src) => src.trim()).filter(Boolean);
+    const length = v.length.trim();
+    const width = v.width.trim();
+    const size = composeSizeLabel(length, width) || v.size.trim();
     return {
       sku: v.sku || `${form.sku || "SKU"}-${String(i + 1).padStart(3, "0")}`,
       price: parseFloat(v.price || form.basePrice) || 1,
       salePrice: v.salePrice ? parseFloat(v.salePrice) : null,
-      stock: v.stock,
+      stock: isPrimary ? Math.max(0, Number(form.quantity) || 0) : 0,
       thumbnail: imagePaths[0] || undefined,
       attributes: {
         shape: form.shape,
-        size: v.size,
+        size,
+        length,
+        width,
         color: v.color,
+        otherColors: v.otherColors || "",
         origin: form.origin,
         material: form.material,
         technique: form.weavingType,

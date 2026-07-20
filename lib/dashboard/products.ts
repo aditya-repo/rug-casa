@@ -13,9 +13,17 @@ export type ProductShape = (typeof PRODUCT_SHAPES)[number];
 export type ProductVariant = {
   id: string;
   shape: string;
+  /** Combined size label for display/API, e.g. `5x7`. Derived from length × width. */
   size: string;
+  /** Length in feet (e.g. `5`). */
+  length: string;
+  /** Width in feet (e.g. `7`). */
+  width: string;
   material: string;
+  /** Primary colour name from master colour list. */
   color: string;
+  /** Additional colours (comma-separated names). */
+  otherColors: string;
   weavingType: string;
   patternArt: string;
   thickness: string;
@@ -28,16 +36,35 @@ export type ProductVariant = {
   isPrimary: boolean;
 };
 
+/** Build storefront size label from length × width (feet). */
+export function composeSizeLabel(length: string, width: string): string {
+  const l = length.trim();
+  const w = width.trim();
+  if (l && w) return `${l}x${w}`;
+  return l || w || "";
+}
+
+/** Split a stored size like `5x7` / `5 × 7` into length and width. */
+export function parseSizeParts(size: string): { length: string; width: string } {
+  const match = size.trim().match(/^([\d.]+)\s*[x×]\s*([\d.]+)/i);
+  if (match) return { length: match[1], width: match[2] };
+  if (size.trim()) return { length: size.trim(), width: "" };
+  return { length: "", width: "" };
+}
+
 export function createEmptyVariant(): ProductVariant {
   return {
     id: `var-${Date.now()}`,
     shape: "Rectangle",
     size: "",
-    material: "Wool",
+    length: "",
+    width: "",
+    material: "Indian Wool",
     color: "Beige",
+    otherColors: "",
     weavingType: "Hand-knotted",
     patternArt: "Geometric",
-    thickness: "Medium pile",
+    thickness: "Medium",
     origin: "India",
     price: "",
     salePrice: "",
@@ -124,7 +151,7 @@ function toListItem(p: DashboardProduct): DashboardProductListItem {
     status: p.status,
     updatedAt: p.updatedAt,
     collection: p.collection,
-    material: p.material || firstVariant?.material || "Wool",
+    material: p.material || firstVariant?.material || "Indian Wool",
     shape: p.shape || firstVariant?.shape || "Rectangle",
     color: firstVariant?.color ?? "—",
     availability: p.availability,
@@ -148,9 +175,9 @@ const handwovenRug: DashboardProduct = {
   collection: "Handwoven",
   categoryId: "",
   weavingType: "Hand-knotted",
-  material: "Wool",
+  material: "Indian Wool",
   patternArt: "Geometric",
-  thickness: "Medium pile",
+  thickness: "Medium",
   shape: "Rectangle",
   featureList: [],
   designTitle: "",
@@ -175,11 +202,14 @@ const handwovenRug: DashboardProduct = {
       id: "var-5x7",
       shape: "Rectangle",
       size: "5x7",
-      material: "Wool",
+      length: "5",
+      width: "7",
+      material: "Indian Wool",
       color: "Beige",
+      otherColors: "",
       weavingType: "Hand-knotted",
       patternArt: "Geometric",
-      thickness: "Medium pile",
+      thickness: "Medium",
       origin: "India",
       price: "18000",
       salePrice: "16500",
@@ -192,11 +222,14 @@ const handwovenRug: DashboardProduct = {
       id: "var-6x9",
       shape: "Rectangle",
       size: "6x9",
-      material: "Wool",
+      length: "6",
+      width: "9",
+      material: "Indian Wool",
       color: "Ivory",
+      otherColors: "",
       weavingType: "Hand-knotted",
       patternArt: "Geometric",
-      thickness: "Medium pile",
+      thickness: "Medium",
       origin: "India",
       price: "22000",
       salePrice: "19999",
@@ -209,11 +242,14 @@ const handwovenRug: DashboardProduct = {
       id: "var-8x10",
       shape: "Rectangle",
       size: "8x10",
-      material: "Wool",
+      length: "8",
+      width: "10",
+      material: "Indian Wool",
       color: "Cream",
+      otherColors: "",
       weavingType: "Hand-knotted",
       patternArt: "Heritage",
-      thickness: "Medium pile",
+      thickness: "Medium",
       origin: "India",
       price: "28000",
       salePrice: "25999",
@@ -246,9 +282,9 @@ const dashboardProductsStore: DashboardProduct[] = [
     collection: "Vintage",
     categoryId: "",
     weavingType: "Hand-knotted",
-    material: "Wool",
+    material: "Indian Wool",
     patternArt: "Geometric",
-    thickness: "Medium pile",
+    thickness: "Medium",
     shape: "Rectangle",
     featureList: [],
     designTitle: "",
@@ -273,11 +309,14 @@ const dashboardProductsStore: DashboardProduct[] = [
         id: "vd-5x7",
         shape: "Rectangle",
         size: "5x7",
-        material: "Wool",
+      length: "5",
+      width: "7",
+        material: "Indian Wool",
         color: "Brown",
+        otherColors: "",
         weavingType: "Machine-made",
         patternArt: "Heritage",
-        thickness: "Low pile",
+        thickness: "Thin",
         origin: "India",
         price: "4199",
         salePrice: "3199",
@@ -290,11 +329,14 @@ const dashboardProductsStore: DashboardProduct[] = [
         id: "vd-6x9",
         shape: "Rectangle",
         size: "6x9",
-        material: "Wool",
+      length: "6",
+      width: "9",
+        material: "Indian Wool",
         color: "Brown",
+        otherColors: "",
         weavingType: "Machine-made",
         patternArt: "Heritage",
-        thickness: "Low pile",
+        thickness: "Thin",
         origin: "India",
         price: "5599",
         salePrice: "4599",
@@ -323,9 +365,9 @@ const dashboardProductsStore: DashboardProduct[] = [
     collection: "Bedroom",
     categoryId: "",
     weavingType: "Hand-knotted",
-    material: "Wool",
+    material: "Indian Wool",
     patternArt: "Geometric",
-    thickness: "Medium pile",
+    thickness: "Medium",
     shape: "Rectangle",
     featureList: [],
     designTitle: "",
@@ -350,11 +392,14 @@ const dashboardProductsStore: DashboardProduct[] = [
         id: "jb-6x9",
         shape: "Rectangle",
         size: "6x9",
+      length: "6",
+      width: "9",
         material: "Jute",
         color: "Beige",
+        otherColors: "",
         weavingType: "Braided",
         patternArt: "Solid",
-        thickness: "Low pile",
+        thickness: "Thin",
         origin: "India",
         price: "2999",
         salePrice: "2499",
@@ -383,9 +428,9 @@ const dashboardProductsStore: DashboardProduct[] = [
     collection: "Living Room",
     categoryId: "",
     weavingType: "Hand-knotted",
-    material: "Wool",
+    material: "Indian Wool",
     patternArt: "Geometric",
-    thickness: "Medium pile",
+    thickness: "Medium",
     shape: "Rectangle",
     featureList: [],
     designTitle: "",
@@ -410,11 +455,14 @@ const dashboardProductsStore: DashboardProduct[] = [
         id: "kf-5x7",
         shape: "Rectangle",
         size: "5x7",
+      length: "5",
+      width: "7",
         material: "Cotton",
         color: "Multi",
+        otherColors: "",
         weavingType: "Flatweave",
         patternArt: "Kilim",
-        thickness: "Low pile",
+        thickness: "Thin",
         origin: "Turkey",
         price: "4599",
         salePrice: "3599",
@@ -443,9 +491,9 @@ const dashboardProductsStore: DashboardProduct[] = [
     collection: "Living Room",
     categoryId: "",
     weavingType: "Hand-knotted",
-    material: "Wool",
+    material: "Indian Wool",
     patternArt: "Geometric",
-    thickness: "Medium pile",
+    thickness: "Medium",
     shape: "Rectangle",
     featureList: [],
     designTitle: "",
@@ -470,11 +518,14 @@ const dashboardProductsStore: DashboardProduct[] = [
         id: "fh-6x9",
         shape: "Rectangle",
         size: "6x9",
+      length: "6",
+      width: "9",
         material: "Silk",
         color: "Red",
+        otherColors: "",
         weavingType: "Hand-tufted",
         patternArt: "Floral",
-        thickness: "High pile",
+        thickness: "Thick",
         origin: "Persia",
         price: "4999",
         salePrice: "3799",
@@ -513,9 +564,9 @@ export function createEmptyProduct(): DashboardProduct {
     collection: "",
     categoryId: "",
     weavingType: "Hand-knotted",
-    material: "Wool",
+    material: "Indian Wool",
     patternArt: "Geometric",
-    thickness: "Medium pile",
+    thickness: "Medium",
     shape: "Rectangle",
     featureList: [],
     designTitle: "",

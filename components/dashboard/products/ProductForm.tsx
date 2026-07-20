@@ -2,22 +2,31 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useCallback, useState, type FormEvent, type ReactNode } from "react";
+import { useCallback, useMemo, useState, type FormEvent, type ReactNode } from "react";
 import type { ApiCategory } from "@/lib/api/categories";
 import type { ApiCollection } from "@/lib/api/collections";
+import type { ApiColor } from "@/lib/api/colors";
 import { createProductClient, updateProductClient } from "@/lib/api/products";
 import type { DashboardProduct, ProductVariant } from "@/lib/dashboard/products";
 import { ProductVariantFields } from "@/components/dashboard/products/ProductVariantFields";
+import { mapApiColorsToOptions } from "@/components/dashboard/products/ColorSearchSelect";
 import {
   CollectionMultiSelect,
   formatCollectionValue,
   parseCollectionValue,
 } from "@/components/dashboard/products/CollectionMultiSelect";
+import {
+  CheckboxMultiSelect,
+  formatCsvOptions,
+  parseCsvOptions,
+} from "@/components/dashboard/products/CheckboxMultiSelect";
 import { createEmptyVariant } from "@/lib/dashboard/products";
 import {
   PRODUCT_AVAILABILITY,
+  PRODUCT_COLORS,
   PRODUCT_DECOR_STYLES,
   PRODUCT_DESIGN_STYLES,
+  PRODUCT_EDITABLE_STATUSES,
   PRODUCT_MATERIALS,
   PRODUCT_ORIGINS,
   PRODUCT_PATTERN_ART,
@@ -26,6 +35,7 @@ import {
   PRODUCT_THICKNESS,
   TAX_OPTIONS,
   availabilityLabel,
+  productStatusLabel,
 } from "@/lib/dashboard/product-options";
 
 type ProductFormProps = {
@@ -33,6 +43,7 @@ type ProductFormProps = {
   mode: "create" | "edit";
   categories: ApiCategory[];
   collections: ApiCollection[];
+  colors?: ApiColor[];
 };
 
 const inputClass =
@@ -78,9 +89,14 @@ export function ProductForm({
   mode,
   categories,
   collections,
+  colors = [],
 }: ProductFormProps) {
   const router = useRouter();
   const [form, setForm] = useState<DashboardProduct>(initial);
+  const colorOptions = useMemo(() => {
+    if (colors.length > 0) return mapApiColorsToOptions(colors);
+    return PRODUCT_COLORS.map((name) => ({ name, hex: "" }));
+  }, [colors]);
   const [slugTouched, setSlugTouched] = useState(mode === "edit");
   const [featureDraft, setFeatureDraft] = useState("");
   const [submitting, setSubmitting] = useState(false);
@@ -172,7 +188,7 @@ export function ProductForm({
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     if (form.variants.length === 0) {
-      setError("Add at least one variant with size, price, and SKU.");
+      setError("Add at least one variant with length, width, price, and SKU.");
       return;
     }
     setError("");
@@ -323,21 +339,15 @@ export function ProductForm({
               ))}
             </select>
           </label>
-          <label className="block">
+          <div className="block">
             <span className={labelClass}>Material</span>
-            <select
-              value={form.material}
-              onChange={(e) => setField("material", e.target.value)}
-              className={inputClass}
-            >
-              <option value="">Select material</option>
-              {withCurrentOption(PRODUCT_MATERIALS, form.material).map((m) => (
-                <option key={m} value={m}>
-                  {m}
-                </option>
-              ))}
-            </select>
-          </label>
+            <CheckboxMultiSelect
+              options={PRODUCT_MATERIALS}
+              value={parseCsvOptions(form.material)}
+              onChange={(materials) => setField("material", formatCsvOptions(materials))}
+              placeholder="Select materials"
+            />
+          </div>
           <label className="block">
             <span className={labelClass}>Pattern</span>
             <select
@@ -483,12 +493,32 @@ export function ProductForm({
             />
           </label>
           <label className="block">
-            <span className={labelClass}>Barcode</span>
-            <input
-              value={form.barcode}
-              onChange={(e) => setField("barcode", e.target.value)}
+            <span className={labelClass}>Status</span>
+            <select
+              value={form.status === "out_of_stock" ? "published" : form.status}
+              onChange={(e) =>
+                setField("status", e.target.value as DashboardProduct["status"])
+              }
               className={inputClass}
-              inputMode="numeric"
+            >
+              {PRODUCT_EDITABLE_STATUSES.map((status) => (
+                <option key={status} value={status}>
+                  {productStatusLabel(status)}
+                </option>
+              ))}
+            </select>
+            <p className="mt-1 text-xs text-neutral-500">
+              Draft products stay hidden from the public shop.
+            </p>
+          </label>
+          <label className="block">
+            <span className={labelClass}>Stock quantity</span>
+            <input
+              type="number"
+              min={0}
+              value={form.quantity}
+              onChange={(e) => setField("quantity", Number(e.target.value) || 0)}
+              className={inputClass}
             />
           </label>
           <label className="block">
@@ -514,16 +544,6 @@ export function ProductForm({
                 </option>
               ))}
             </select>
-          </label>
-          <label className="block">
-            <span className={labelClass}>Quantity (parent)</span>
-            <input
-              type="number"
-              min={0}
-              value={form.quantity}
-              onChange={(e) => setField("quantity", Number(e.target.value) || 0)}
-              className={inputClass}
-            />
           </label>
           <label className="block">
             <span className={labelClass}>Availability</span>
@@ -597,7 +617,7 @@ export function ProductForm({
 
       <Section title="Variants">
         <p className="-mt-2 text-sm text-neutral-500">
-          Each variant is a sellable option — size, color, price, SKU, and image. Mark one as
+          Each variant is a sellable option — length, width, color, price, SKU, and image. Mark one as
           primary (defaults to the first). Product type attributes are set above.
         </p>
 
@@ -605,7 +625,7 @@ export function ProductForm({
           <div className="rounded-lg border border-dashed border-neutral-300 bg-neutral-50/50 px-4 py-8 text-center">
             <p className="text-sm font-medium text-neutral-700">No variants yet</p>
             <p className="mt-1 text-xs text-neutral-500">
-              Use Add Variant to define sizes like 5x7, 6x9, 8x10.
+              Use Add Variant to define sizes with separate length and width (e.g. 5 × 7 ft).
             </p>
           </div>
         ) : (
@@ -619,6 +639,7 @@ export function ProductForm({
                   key={variant.id}
                   variant={{ ...variant, isPrimary }}
                   index={index}
+                  colorOptions={colorOptions}
                   onChange={(patch) => updateVariant(variant.id, patch)}
                   onSetPrimary={() => setPrimaryVariant(variant.id)}
                   onRemove={() => removeVariant(variant.id)}

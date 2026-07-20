@@ -74,3 +74,21 @@ export function IconCollections({ className = "h-5 w-5" }: { className?: string 
     </svg>
   );
 }
+
+export function IconColors({ className = "h-5 w-5" }: { className?: string }) {
+  return (
+    <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5} aria-hidden>
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        d="M4.098 19.902a3.75 3.75 0 005.304 0l6.236-6.236a3.75 3.75 0 00-.894-6.004M9.75 9.75l6.236-6.236a3.75 3.75 0 015.304 5.304L15.054 15.054"
+      />
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        d="M9.75 9.75l-2.47 2.47a3.375 3.375 0 004.773 4.773L15.054 15.054"
+      />
+      <circle cx="7.5" cy="16.5" r="1.125" fill="currentColor" stroke="none" />
+    </svg>
+  );
+}

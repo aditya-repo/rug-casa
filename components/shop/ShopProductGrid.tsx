@@ -27,9 +27,15 @@ function matchesSize(dimensions: string, sizeId: string): boolean {
 
 function matchesAny(selected: string[], value: string): boolean {
   if (selected.length === 0) return true;
-  const normalized = value.trim().toLowerCase();
-  if (!normalized) return false;
-  return selected.some((item) => item.trim().toLowerCase() === normalized);
+  const parts = value
+    .split(",")
+    .map((part) => part.trim().toLowerCase())
+    .filter(Boolean);
+  if (parts.length === 0) return false;
+  return selected.some((item) => {
+    const needle = item.trim().toLowerCase();
+    return parts.includes(needle) || parts.some((part) => part === needle);
+  });
 }
 
 type ShopProductGridProps = {

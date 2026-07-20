@@ -103,3 +103,23 @@ export async function updateProductClient(id: string, form: DashboardProduct) {
   });
   return mapProductToDetail(res.data as Parameters<typeof mapProductToDetail>[0]);
 }
+
+export async function deleteProductClient(id: string) {
+  await clientApi<{ message: string }>(`/products/${id}`, {
+    method: "DELETE",
+  });
+}
+
+export async function setProductStatusClient(
+  id: string,
+  status: "PUBLISHED" | "DRAFT" | "ARCHIVED",
+) {
+  const path =
+    status === "PUBLISHED"
+      ? `/products/${id}/publish`
+      : status === "ARCHIVED"
+        ? `/products/${id}/archive`
+        : `/products/${id}/draft`;
+  const res = await clientApi<unknown>(path, { method: "PUT" });
+  return mapProductToListItem(res.data as Parameters<typeof mapProductToListItem>[0]);
+}

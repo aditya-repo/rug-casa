@@ -1,9 +1,11 @@
 import Image from "next/image";
 import Link from "next/link";
 import { StatusBadge } from "@/components/dashboard/StatusBadge";
+import { ProductLifecycleActions } from "@/components/dashboard/products/ProductLifecycleActions";
 import { imageUrl } from "@/lib/api/mappers";
 import type { DashboardProduct } from "@/lib/dashboard/products";
 import { availabilityLabel } from "@/lib/dashboard/product-options";
+import type { ProductApiStatus } from "@/lib/api/products";
 
 import type { ReactNode } from "react";
 
@@ -44,6 +46,13 @@ function formatRupee(value: string) {
 export function ProductDetailView({ product }: ProductDetailViewProps) {
   const totalStock =
     product.variants.reduce((sum, v) => sum + v.stock, 0) || product.quantity;
+  const apiStatus = (
+    product.status === "archived"
+      ? "ARCHIVED"
+      : product.status === "draft"
+        ? "DRAFT"
+        : "PUBLISHED"
+  ) as ProductApiStatus;
 
   return (
     <div className="space-y-6">
@@ -87,6 +96,13 @@ export function ProductDetailView({ product }: ProductDetailViewProps) {
             >
               Back to list
             </Link>
+          </div>
+          <div className="mt-3">
+            <ProductLifecycleActions
+              productId={product.id}
+              productName={product.name}
+              apiStatus={apiStatus}
+            />
           </div>
         </div>
         <div className="text-right text-sm">
@@ -151,10 +167,9 @@ export function ProductDetailView({ product }: ProductDetailViewProps) {
 
         <DetailSection title="Inventory">
           <DetailRow label="SKU" value={product.sku || "—"} />
-          <DetailRow label="Barcode" value={product.barcode || "—"} />
+          <DetailRow label="Stock quantity" value={product.quantity} />
           <DetailRow label="HSN number" value={product.hsn || "—"} />
           <DetailRow label="Tax" value={product.tax || "—"} />
-          <DetailRow label="Quantity" value={product.quantity} />
           <DetailRow label="Availability" value={availabilityLabel(product.availability)} />
         </DetailSection>
 
@@ -181,10 +196,16 @@ export function ProductDetailView({ product }: ProductDetailViewProps) {
                   Primary
                 </th>
                 <th className="px-5 py-3 text-xs font-semibold uppercase text-neutral-500">
-                  Size
+                  Length
                 </th>
                 <th className="px-5 py-3 text-xs font-semibold uppercase text-neutral-500">
-                  Color
+                  Width
+                </th>
+                <th className="px-5 py-3 text-xs font-semibold uppercase text-neutral-500">
+                  Primary colour
+                </th>
+                <th className="px-5 py-3 text-xs font-semibold uppercase text-neutral-500">
+                  Other colours
                 </th>
                 <th className="px-5 py-3 text-xs font-semibold uppercase text-neutral-500">
                   Price
@@ -216,8 +237,16 @@ export function ProductDetailView({ product }: ProductDetailViewProps) {
                       <span className="text-neutral-400">—</span>
                     )}
                   </td>
-                  <td className="px-5 py-3 font-medium text-neutral-900">{variant.size}</td>
-                  <td className="px-5 py-3">{variant.color}</td>
+                  <td className="px-5 py-3 font-medium text-neutral-900">
+                    {variant.length ? `${variant.length} ft` : "—"}
+                  </td>
+                  <td className="px-5 py-3 font-medium text-neutral-900">
+                    {variant.width ? `${variant.width} ft` : "—"}
+                  </td>
+                  <td className="px-5 py-3">{variant.color || "—"}</td>
+                  <td className="px-5 py-3 text-neutral-600">
+                    {variant.otherColors?.trim() || "—"}
+                  </td>
                   <td className="px-5 py-3">{formatRupee(variant.price)}</td>
                   <td className="px-5 py-3">
                     {variant.salePrice ? formatRupee(variant.salePrice) : "—"}
@@ -237,7 +266,7 @@ export function ProductDetailView({ product }: ProductDetailViewProps) {
                           >
                             <Image
                               src={displaySrc}
-                              alt={`${variant.size || "Variant"} ${imageIndex + 1}`}
+                              alt={`${variant.length && variant.width ? `${variant.length}x${variant.width}` : variant.size || "Variant"} ${imageIndex + 1}`}
                               fill
                               className="object-cover"
                               sizes="40px"

@@ -12,6 +12,7 @@ import {
   type ProductApiStatus,
   type ProductListRow,
 } from "@/lib/api/products";
+import { ProductLifecycleActions } from "@/components/dashboard/products/ProductLifecycleActions";
 import {
   PRODUCT_MATERIALS,
   PRODUCT_PATTERN_ART,
@@ -41,6 +42,22 @@ function mergeFilterOptions(base: readonly string[], values: string[]) {
   return [...new Set([...base, ...values.filter((v) => v && v !== "—")])].sort((a, b) =>
     a.localeCompare(b),
   );
+}
+
+function splitAttributeValues(value: string): string[] {
+  if (!value.trim() || value === "—") return [];
+  return value
+    .split(",")
+    .map((part) => part.trim())
+    .filter(Boolean);
+}
+
+function matchesAttributeFilter(filter: string, value: string): boolean {
+  if (!filter) return true;
+  const parts = splitAttributeValues(value).map((part) => part.toLowerCase());
+  if (parts.length === 0) return false;
+  const needle = filter.trim().toLowerCase();
+  return parts.includes(needle);
 }
 
 export function DashboardProductListing({
@@ -96,7 +113,7 @@ export function DashboardProductListing({
   const filteredProducts = useMemo(() => {
     return products.filter((p) => {
       if (shapeFilter && p.shape !== shapeFilter) return false;
-      if (materialFilter && p.material !== materialFilter) return false;
+      if (materialFilter && !matchesAttributeFilter(materialFilter, p.material)) return false;
       if (weavingFilter && p.weavingType !== weavingFilter) return false;
       if (patternFilter && p.patternArt !== patternFilter) return false;
       if (thicknessFilter && p.thickness !== thicknessFilter) return false;
@@ -120,7 +137,11 @@ export function DashboardProductListing({
     [products],
   );
   const materialOptions = useMemo(
-    () => mergeFilterOptions(PRODUCT_MATERIALS, products.map((p) => p.material)),
+    () =>
+      mergeFilterOptions(
+        PRODUCT_MATERIALS,
+        products.flatMap((p) => splitAttributeValues(p.material)),
+      ),
     [products],
   );
   const weavingOptions = useMemo(
@@ -377,13 +398,32 @@ export function DashboardProductListing({
                   </td>
                   <td className="whitespace-nowrap px-4 py-3 text-neutral-500">{product.updatedAt}</td>
                   <td className="px-4 py-3">
-                    <div className="flex gap-2">
-                      <Link href={`/dashboard/products/${product.id}`} className={actionLinkClass}>
-                        View
-                      </Link>
-                      <Link href={`/dashboard/products/${product.id}/edit`} className={actionLinkClass}>
-                        Edit
-                      </Link>
+                    <div className="flex flex-col gap-2">
+                      <div className="flex gap-2">
+                        <Link href={`/dashboard/products/${product.id}`} className={actionLinkClass}>
+                          View
+                        </Link>
+                        <Link
+                          href={`/dashboard/products/${product.id}/edit`}
+                          className={actionLinkClass}
+                        >
+                          Edit
+                        </Link>
+                      </div>
+                      <ProductLifecycleActions
+                        compact
+                        productId={product.id}
+                        productName={product.name}
+                        apiStatus={product.apiStatus}
+                        onChanged={() =>
+                          loadProducts(
+                            debouncedSearch,
+                            statusFilter,
+                            categoryFilter,
+                            featuredFilter,
+                          )
+                        }
+                      />
                     </div>
                   </td>
                 </tr>

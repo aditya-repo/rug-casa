@@ -1,5 +1,9 @@
 import { publicApi } from "./fetch";
-import { imageUrl } from "./mappers";
+import {
+  imageUrl,
+  parseVariantImages,
+  pickPrimaryVariant,
+} from "./mappers";
 import {
   DEFAULT_SERVICES,
   buildInfoAccordions,
@@ -87,7 +91,7 @@ export function mapPublicProductToDetail(
   related: ProductItem[] = [],
 ): ProductDetailModel {
   const variants = product.variants ?? [];
-  const primary = variants[0];
+  const primary = pickPrimaryVariant(variants);
   const primaryAttrs = mapAttrs(primary?.attributes);
   const sale = toNumber(primary?.salePrice ?? primary?.price);
   const mrp = toNumber(primary?.price ?? sale);
@@ -100,9 +104,12 @@ export function mapPublicProductToDetail(
     }))
     .filter((img) => Boolean(img.src));
 
-  if (images.length === 0 && primary?.thumbnail) {
-    const src = imageUrl(primary.thumbnail);
-    if (src) images.push({ src, alt: product.title });
+  const variantImagePaths = parseVariantImages(primary?.thumbnail, primary?.attributes);
+  for (const path of variantImagePaths) {
+    const src = imageUrl(path);
+    if (src && !images.some((img) => img.src === src)) {
+      images.push({ src, alt: product.title });
+    }
   }
 
   // Unique colors from variants
@@ -112,7 +119,8 @@ export function mapPublicProductToDetail(
     const label = attrs.color || "As shown";
     const key = label.toLowerCase();
     if (colorMap.has(key)) continue;
-    const thumb = v.thumbnail ? imageUrl(v.thumbnail) : images[0]?.src;
+    const variantPaths = parseVariantImages(v.thumbnail, v.attributes);
+    const thumb = imageUrl(variantPaths[0]) || images[0]?.src;
     colorMap.set(key, {
       id: key.replace(/\s+/g, "-") || "default",
       label,

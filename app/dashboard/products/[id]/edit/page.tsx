@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import { DashboardPageHeader } from "@/components/dashboard/DashboardPageHeader";
 import { ProductForm } from "@/components/dashboard/products/ProductForm";
 import { fetchCategories } from "@/lib/api/categories";
+import { fetchActiveColors } from "@/lib/api/colors";
 import { fetchActiveCollections } from "@/lib/api/collections";
 import { fetchProductById } from "@/lib/api/products";
 
@@ -11,10 +12,11 @@ type PageProps = {
 
 export default async function EditProductPage({ params }: PageProps) {
   const { id } = await params;
-  const [product, { items: categories }, collections] = await Promise.all([
+  const [product, { items: categories }, collections, colors] = await Promise.all([
     fetchProductById(id),
     fetchCategories(),
     fetchActiveCollections(),
+    fetchActiveColors(),
   ]);
 
   if (!product) {
@@ -29,6 +31,7 @@ export default async function EditProductPage({ params }: PageProps) {
         mode="edit"
         categories={categories}
         collections={collections}
+        colors={colors}
       />
     </div>
   );
