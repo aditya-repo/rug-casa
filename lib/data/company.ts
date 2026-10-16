@@ -8,28 +8,29 @@ export const company = {
   tagline: "Beautiful rugs and carpets to elevate every space in your home.",
 
   websiteUrl: "https://rugsbhadohi.com",
-  supportEmail: "support@rugsbhadohi.com",
+  supportEmail: "op865543@gmail.com",
 
   address: {
-    line1: "Khasra No. 799, Aurangabad, Aurai",
-    line2: "Bhadohi, Uttar Pradesh – 221301",
+    line1: "OM Enterprises, Bhajaipur, Khamaria, Block - Aurai",
+    // line1: "Khasra No. 799, Aurangabad, Aurai",
+    line2: "Bhadohi, Uttar Pradesh – 221306",
     country: "India",
   },
 
   phone: {
-    display: "+91 98765 43210",
-    tel: "tel:+919876543210",
+    display: "+91 84232 28771",
+    tel: "tel:+918423228771",
   },
 
-  /** Optional secondary support line shown on policy/contact pages */
+
   phoneAlt: {
-    display: "+91 98765 43211",
-    tel: "tel:+919876543211",
+      display: "+91 63863 28637",
+    tel: "tel:+916386328637",
   },
 
   whatsapp: {
-    display: "+91 98765 43210",
-    e164: "919876543210",
+      display: "+91 84232 28771",
+    e164: "918423228771",
   },
 
   refundPolicy: {
